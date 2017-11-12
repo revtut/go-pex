@@ -5,31 +5,50 @@ import (
 	"strings"
 	"time"
 	"encoding/json"
+	"fmt"
 )
+
+// CleanObject removes all the fields that a given user does not have access and
+// returns a string to interface map where each key is the field of the object
+// and the value, the value of that field.
+// It uses the json tag to get the field name, it it is not defined uses the field
+// name of the struct.
+func CleanObject(object interface{}, userType uint, action uint) map[string]interface{} {
+	if action == ActionWrite {
+		return nil
+	} else if action == ActionRead {
+		return nil
+	} else {
+		panic("Invalid value for action.")
+	}
+}
+
+// CleanSlice removes all the fields that a given user does not have access and
+// returns an array of string to interface map where each key is the field of the object
+// and the value, the value of that field.
+// It uses the json tag to get the field name, it it is not defined uses the field
+// name of the struct.
+func CleanSlice(object []interface{}, userType uint, action uint) []map[string]interface{} {
+	objects := make([]map[string]interface{}, len(object))
+	for i := 0; i < len(object); i++ {
+		objects[i] = CleanObject(object[i], userType, action)
+	}
+	return objects
+}
+
+func cleanObjectRead(object interface{}, userType uint, action uint) map[string]interface{} {
+	// Get the structure of the object
+	reflectValue := reflect.ValueOf(object)
+	for reflectValue.Kind() == reflect.Ptr || reflectValue.Kind() == reflect.Interface {
+		reflectValue = reflectValue.Elem()
+	}
+	if !reflectValue.IsValid() {
+		return nil
+	}
+}
 
 // RemoveFields removes the fields that the user can't view, write or export from the interface
 func RemoveFields(obj interface{}, userType uint, action uint) interface{} {
-	// Slice
-	if reflect.TypeOf(obj).Kind() == reflect.Slice {
-		values := reflect.ValueOf(obj)
-
-		result := make([]interface{}, values.Len())
-		for i := 0; i < values.Len(); i++ {
-			sliceObject := values.Index(i).Interface()
-			result[i] = RemoveFields(sliceObject, userType, action)
-		}
-
-		return result
-	}
-
-	// Single Object
-	objectValue := reflect.ValueOf(obj)
-	if reflect.TypeOf(obj).Kind() == reflect.Ptr {
-		objectValue = objectValue.Elem()
-	}
-	if !objectValue.IsValid() {
-		return nil
-	}
 
 	objectType := reflect.TypeOf(objectValue.Interface())
 	resultObject := map[string]interface{}{}
