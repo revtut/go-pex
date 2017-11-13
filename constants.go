@@ -1,5 +1,7 @@
 package go_pex
 
+const PERMISSION_TAG = "pex"
+
 const (
 	// ActionWrite is used when the action is writing
 	ActionWrite = 0

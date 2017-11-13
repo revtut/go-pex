@@ -3,6 +3,8 @@ package go_pex
 import (
 	"reflect"
 	"encoding/json"
+	"strings"
+	"time"
 )
 
 // CleanStruct removes the fields that the user can't read / write
