@@ -3,15 +3,27 @@ package go_pex
 import (
 	"reflect"
 	"strings"
+	"fmt"
 )
 
 // CleanObject removes all the fields that a given user does not have access and
-// returns a string to interface map where each key is the field of the object
-// and the value, the value of that field.
+// returns a JSON interface of that object.
 // It uses the json tag to get the field name, it it is not defined uses the field
 // name of the struct.
-func CleanObject(object interface{}, userType uint, action uint) map[string]interface{} {
-	// TODO: Check if slice because it might receive slice pointers
+func CleanObject(object interface{}, userType uint, action uint) interface{} {
+	reflectType := reflect.TypeOf(object)
+	switch reflectType.Kind() {
+	case reflect.Slice:
+		return cleanSlice(object, userType, action)
+	case reflect.Array:
+		return object
+	default:
+		return cleanSingleObject(object, userType, action)
+	}
+}
+
+func cleanSingleObject(object interface{}, userType uint, action uint) interface{} {
+	// TODO: Check for time.Time also
 
 	// Get the value of the object
 	reflectValue := getReflectValue(object)
@@ -37,17 +49,18 @@ func CleanObject(object interface{}, userType uint, action uint) map[string]inte
 			fieldName = reflectType.Field(i).Name
 		}
 
-		if field.Kind() == reflect.Slice {
-			if reflect.TypeOf(field.Interface()).Elem().Kind() == reflect.Struct { // Type of the slice
-				resultObject[fieldName] = CleanSlice(field.Interface().([]interface{}), userType, action)
-			} else {
-				resultObject[fieldName] = field.Interface()
-			}
-		} else if field.Kind() == reflect.Ptr || field.Kind() == reflect.Struct || field.Kind() == reflect.Interface {
+		if field.Kind() == reflect.Slice || field.Kind() == reflect.Ptr || field.Kind() == reflect.Interface {
+			resultObject[fieldName] = CleanObject(field.Interface(), userType, action)
+		} else if field.Kind() == reflect.Struct {
 			subObject := CleanObject(field.Interface(), userType, action)
 			if reflectType.Field(i).Anonymous && subObject != nil {
-				for key, value := range subObject {
-					resultObject[key] = value
+				subObjectMap, ok := subObject.(map[string]interface{})
+				if ok {
+					for key, value := range subObjectMap {
+						resultObject[key] = value
+					}
+				} else {
+					resultObject[fieldName] = subObject
 				}
 			} else {
 				resultObject[fieldName] = subObject
@@ -60,15 +73,21 @@ func CleanObject(object interface{}, userType uint, action uint) map[string]inte
 	return resultObject
 }
 
-// CleanSlice removes all the fields that a given user does not have access and
-// returns an array of string to interface map where each key is the field of the object
-// and the value, the value of that field.
-// It uses the json tag to get the field name, it it is not defined uses the field
-// name of the struct.
-func CleanSlice(object []interface{}, userType uint, action uint) []map[string]interface{} {
-	resultObjects := make([]map[string]interface{}, len(object))
-	for i := 0; i < len(object); i++ {
-		resultObjects[i] = CleanObject(object[i], userType, action)
+func cleanSlice(object interface{}, userType uint, action uint) interface{} {
+	// Slice of builtin types, then no need to iterate
+	if reflect.TypeOf(object).Elem().Kind() != reflect.Struct {
+		return object
+	}
+
+	// Iterate through each single object in the slice
+	reflectValue := getReflectValue(object)
+	if reflectValue == nil {
+		return nil
+	}
+
+	resultObjects := make([]interface{}, reflectValue.Len())
+	for i := 0; i < reflectValue.Len(); i++ {
+		resultObjects[i] = CleanObject(reflectValue.Index(i), userType, action)
 	}
 	return resultObjects
 }
@@ -95,13 +114,6 @@ func getJSONFieldName(tags reflect.StructTag) string {
 	if strings.HasSuffix(fieldName, ",omitempty") {
 		fieldName = fieldName[0: len(fieldName)-len(",omitempty")]
 	}
-
-	/*
-	TODO: Consider this case
-	if fieldName == "-" {
-		return ""
-	}
-	*/
 
 	return fieldName
 }
