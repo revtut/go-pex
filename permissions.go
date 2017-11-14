@@ -3,26 +3,29 @@ package go_pex
 import (
 	"reflect"
 	"strings"
-	"fmt"
 )
 
 // CleanObject removes all the fields that a given user does not have access and
-// returns a JSON interface of that object.
+// returns a JSON interface of that object either its an array, slice or struct.
 // It uses the json tag to get the field name, it it is not defined uses the field
 // name of the struct.
 func CleanObject(object interface{}, userType uint, action uint) interface{} {
 	reflectType := reflect.TypeOf(object)
 	switch reflectType.Kind() {
 	case reflect.Slice:
-		return cleanSlice(object, userType, action)
+		return CleanSlice(object, userType, action)
 	case reflect.Array:
 		return object
 	default:
-		return cleanSingleObject(object, userType, action)
+		return CleanSingleObject(object, userType, action)
 	}
 }
 
-func cleanSingleObject(object interface{}, userType uint, action uint) interface{} {
+// CleanSingleObject removes all the fields that a given user does not have access and
+// returns a JSON interface of that object.
+// It uses the json tag to get the field name, it it is not defined uses the field
+// name of the struct.
+func CleanSingleObject(object interface{}, userType uint, action uint) interface{} {
 	// TODO: Check for time.Time also
 
 	// Get the value of the object
@@ -39,12 +42,12 @@ func cleanSingleObject(object interface{}, userType uint, action uint) interface
 		tags := reflectType.Field(i).Tag
 
 		// Check permission
-		if !hasPermission(tags, userType, action) {
+		if !HasPermission(tags.Get(PermissionTag), userType, action) {
 			continue
 		}
 
 		// Get the field name
-		fieldName := getJSONFieldName(tags)
+		fieldName := GetJSONFieldName(tags.Get("json"))
 		if fieldName == "" {
 			fieldName = reflectType.Field(i).Name
 		}
@@ -73,7 +76,11 @@ func cleanSingleObject(object interface{}, userType uint, action uint) interface
 	return resultObject
 }
 
-func cleanSlice(object interface{}, userType uint, action uint) interface{} {
+// CleanSlice removes all the fields that a given user does not have access and
+// returns a JSON interface of an array of objects.
+// It uses the json tag to get the field name of each of the objects,
+// it it is not defined uses the field name of the struct.
+func CleanSlice(object interface{}, userType uint, action uint) interface{} {
 	// Slice of builtin types, then no need to iterate
 	if reflect.TypeOf(object).Elem().Kind() != reflect.Struct {
 		return object
@@ -92,35 +99,23 @@ func cleanSlice(object interface{}, userType uint, action uint) interface{} {
 	return resultObjects
 }
 
-func getReflectValue(object interface{}) *reflect.Value {
-	// Get the structure of the object
-	reflectValue := reflect.ValueOf(object)
-	for reflectValue.Kind() == reflect.Ptr || reflectValue.Kind() == reflect.Interface {
-		reflectValue = reflectValue.Elem()
-	}
-	if !reflectValue.IsValid() {
-		return nil
-	}
-
-	return &reflectValue
-}
-
-func getJSONFieldName(tags reflect.StructTag) string {
-	fieldName := tags.Get("json")
-	if fieldName == "" {
+// GetJSONFieldName returns the field name given a JSON tag
+func GetJSONFieldName(jsonTag string) string {
+	if jsonTag == "" {
 		return ""
 	}
 
-	if strings.HasSuffix(fieldName, ",omitempty") {
-		fieldName = fieldName[0: len(fieldName)-len(",omitempty")]
+	if strings.HasSuffix(jsonTag, ",omitempty") {
+		jsonTag = jsonTag[0: len(jsonTag)-len(",omitempty")]
 	}
 
-	return fieldName
+	return jsonTag
 }
 
-func hasPermission(tags reflect.StructTag, userType uint, action uint) bool {
+// HasPermission returns true if the user has permission for that action on that field
+// or false otherwise
+func HasPermission(permissionTag string, userType uint, action uint) bool {
 	// Get permissions tag
-	permissionTag := tags.Get(PERMISSION_TAG)
 	if permissionTag == "" {
 		return true
 	}
@@ -135,4 +130,18 @@ func hasPermission(tags reflect.StructTag, userType uint, action uint) bool {
 	} else {
 		return true
 	}
+}
+
+// getReflectValue returns the reflect value of an interface it is exists and its valid
+func getReflectValue(object interface{}) *reflect.Value {
+	// Get the structure of the object
+	reflectValue := reflect.ValueOf(object)
+	for reflectValue.Kind() == reflect.Ptr || reflectValue.Kind() == reflect.Interface {
+		reflectValue = reflectValue.Elem()
+	}
+	if !reflectValue.IsValid() {
+		return nil
+	}
+
+	return &reflectValue
 }

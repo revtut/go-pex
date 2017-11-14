@@ -1,7 +1,9 @@
 package go_pex
 
-const PERMISSION_TAG = "pex"
+// PermissionTag is the tag to use in structs to specify the permissions of each field
+const PermissionTag = "pex"
 
+// Actions
 const (
 	// ActionWrite is used when the action is writing
 	ActionWrite = 0
@@ -9,6 +11,7 @@ const (
 	ActionRead = 1
 )
 
+// Permissions
 const (
 	// PermissionNone means it hasn't any permission
 	PermissionNone = 0
