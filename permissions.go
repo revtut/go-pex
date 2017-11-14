@@ -33,7 +33,7 @@ func CleanSingleObject(object interface{}, userType uint, action uint) interface
 
 	// If not struct just return the object
 	if reflectValue.Kind() != reflect.Struct {
-		return object
+		return reflectValue.Interface()
 	}
 
 	// TODO: Check for time.Time also
@@ -89,11 +89,11 @@ func CleanMultipleObjects(object interface{}, userType uint, action uint) interf
 	// If not slice or array just return the object
 	if reflectValue.Kind() != reflect.Slice &&
 		reflectValue.Kind() != reflect.Array {
-		return object
+		return reflectValue.Interface()
 	}
 	// Multiple objects of builtin types, then no need to iterate
-	if reflectValue.Elem().Kind() != reflect.Struct {
-		return object
+	if reflect.TypeOf(object).Elem().Kind() != reflect.Struct {
+		return reflectValue.Interface()
 	}
 
 	// Iterate through each single object in the slice
@@ -124,9 +124,9 @@ func HasPermission(permissionTag string, userType uint, action uint) bool {
 	permission := int(permissionTag[userType] - '0')
 
 	// Check permissions
-	if action == ActionWrite {
+	if action == ActionRead {
 		return permission == PermissionRead || permission == PermissionReadWrite
-	} else if action == ActionRead {
+	} else if action == ActionWrite {
 		return permission == PermissionWrite || permission == PermissionReadWrite
 	} else {
 		return true
