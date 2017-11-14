@@ -51,7 +51,7 @@ func RemoveFields(obj interface{}, userType uint, action uint) interface{} {
 
 	for i := 0; i < objectValue.NumField(); i++ {
 		field := objectValue.Field(i)
-		if field.Kind() == reflect.Slice && action == ActionWrite {
+		if field.Kind() == reflect.Slice && action == ActionRead {
 			continue
 		}
 
@@ -60,7 +60,7 @@ func RemoveFields(obj interface{}, userType uint, action uint) interface{} {
 
 		// Check the gorm tag
 		gormTag := tags.Get("gorm")
-		if gormTag == "-" && action == ActionWrite {
+		if gormTag == "-" && action == ActionRead {
 			continue
 		}
 
@@ -72,11 +72,11 @@ func RemoveFields(obj interface{}, userType uint, action uint) interface{} {
 		}
 
 		// Check permissions
-		if action == ActionRead || action == ActionExport {
+		if action == ActionWrite || action == ActionExport {
 			if permission != PermissionRead && permission != PermissionReadWrite {
 				continue
 			}
-		} else if action == ActionWrite {
+		} else if action == ActionRead {
 			if permission != PermissionReadWrite && permission != PermissionWrite {
 				continue
 			}

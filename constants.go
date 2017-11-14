@@ -5,10 +5,10 @@ const PermissionTag = "pex"
 
 // Actions
 const (
-	// ActionWrite is used when the action is writing
-	ActionWrite = 0
-	// ActionRead is used when the action is reading
-	ActionRead = 1
+	// ActionRead is used when the action is writing
+	ActionRead = 0
+	// ActionWrite is used when the action is reading
+	ActionWrite = 1
 )
 
 // Permissions

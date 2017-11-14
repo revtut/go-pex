@@ -68,7 +68,7 @@ func CleanSingleObject(object interface{}, userType uint, action uint) interface
 				resultObject[fieldName] = cleanedField
 			}
 		} else {
-			resultObject[fieldName] = field.Interface()
+			resultObject[fieldName] = cleanedField
 		}
 	}
 
@@ -124,9 +124,9 @@ func HasPermission(permissionTag string, userType uint, action uint) bool {
 	permission := int(permissionTag[userType] - '0')
 
 	// Check permissions
-	if action == ActionRead {
+	if action == ActionWrite {
 		return permission == PermissionRead || permission == PermissionReadWrite
-	} else if action == ActionWrite {
+	} else if action == ActionRead {
 		return permission == PermissionWrite || permission == PermissionReadWrite
 	} else {
 		return true
