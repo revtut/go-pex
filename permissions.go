@@ -105,11 +105,7 @@ func GetJSONFieldName(jsonTag string) string {
 		return ""
 	}
 
-	if strings.HasSuffix(jsonTag, ",omitempty") {
-		jsonTag = jsonTag[0: len(jsonTag)-len(",omitempty")]
-	}
-
-	return jsonTag
+	return strings.Split(jsonTag, ",")[0]
 }
 
 // HasPermission returns true if the user has permission for that action on that field

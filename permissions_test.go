@@ -39,3 +39,22 @@ func TestHasPermission(t *testing.T) {
 		}
 	}
 }
+
+func TestGetJSONFieldName(t *testing.T) {
+	tables := []struct {
+		tag    string
+		result string
+	}{
+		{"permissionTag", "permissionTag"},
+		{"permissionTag,omitempty",  "permissionTag"},
+		{"UpperCase", "UpperCase"},
+	}
+
+	for _, table := range tables {
+		fieldName := GetJSONFieldName(table.tag)
+		if fieldName != table.result {
+			t.Errorf("Get JSON field name (tag = %s) was incorrect, got: %s, want: %s.",
+				table.tag, fieldName, table.result)
+		}
+	}
+}
