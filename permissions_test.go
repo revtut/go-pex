@@ -1,33 +1,41 @@
 package go_pex
 
-import "testing"
+import (
+	"testing"
+	"strconv"
+	"strings"
+)
 
-type StructA struct {
-	Slice []int
-	Pointer *StructB
-	SlicePointer []*StructB
-}
+func TestHasPermission(t *testing.T) {
+	permissionTag := strings.Join(
+		[]string{
+			strconv.Itoa(PermissionNone),
+			strconv.Itoa(PermissionRead),
+			strconv.Itoa(PermissionWrite),
+			strconv.Itoa(PermissionReadWrite),
+		}, "")
 
-type StructB struct {
-	Text string
-}
-
-func TestGetReflectValue(t *testing.T) {
 	tables := []struct {
-		x int
-		y int
-		n int
+		tag      string
+		userType uint
+		action   uint
+		result   bool
 	}{
-		{1, 1, 2},
-		{1, 2, 3},
-		{2, 2, 4},
-		{5, 2, 7},
+		{permissionTag, 0, ActionRead, false},
+		{permissionTag, 0, ActionWrite, false},
+		{permissionTag, 1, ActionRead, true},
+		{permissionTag, 1, ActionWrite, false},
+		{permissionTag, 2, ActionRead, false},
+		{permissionTag, 2, ActionWrite, true},
+		{permissionTag, 3, ActionRead, true},
+		{permissionTag, 3, ActionWrite, true},
 	}
 
 	for _, table := range tables {
-		total := Sum(table.x, table.y)
-		if total != table.n {
-			t.Errorf("Sum of (%d+%d) was incorrect, got: %d, want: %d.", table.x, table.y, total, table.n)
+		hasPermission := HasPermission(table.tag, table.userType, table.action)
+		if hasPermission != table.result {
+			t.Errorf("Has permission (tag = %s, userType = %d, action = %d) was incorrect, got: %t, want: %t.",
+				table.tag, table.userType, table.action, hasPermission, table.result)
 		}
 	}
 }

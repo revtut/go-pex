@@ -1,12 +1,6 @@
 package go_pex
 
-import (
-	"reflect"
-	"encoding/json"
-	"strings"
-	"time"
-)
-
+/*
 // CleanStruct removes the fields that the user can't read / write
 func CleanStruct(obj interface{}, userType uint, action uint) {
 	// Remove fields without permission to change
@@ -187,3 +181,4 @@ func RemoveFields(obj interface{}, userType uint, action uint) interface{} {
 
 	return resultObject
 }
+*/
