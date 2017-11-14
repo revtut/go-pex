@@ -10,14 +10,14 @@ import (
 // It uses the json tag to get the field name, it it is not defined uses the field
 // name of the struct.
 func CleanObject(object interface{}, userType uint, action uint) interface{} {
-	reflectType := reflect.TypeOf(object)
-	switch reflectType.Kind() {
-	case reflect.Slice:
-		return CleanSlice(object, userType, action)
-	case reflect.Array:
-		return object
-	default:
+	reflectValue := getReflectValue(object)
+	switch reflectValue.Kind() {
+	case reflect.Slice, reflect.Array:
+		return CleanMultipleObjects(object, userType, action)
+	case reflect.Struct:
 		return CleanSingleObject(object, userType, action)
+	default:
+		return object
 	}
 }
 
@@ -26,13 +26,17 @@ func CleanObject(object interface{}, userType uint, action uint) interface{} {
 // It uses the json tag to get the field name, it it is not defined uses the field
 // name of the struct.
 func CleanSingleObject(object interface{}, userType uint, action uint) interface{} {
-	// TODO: Check for time.Time also
-
-	// Get the value of the object
 	reflectValue := getReflectValue(object)
 	if reflectValue == nil {
 		return nil
 	}
+
+	// If not struct just return the object
+	if reflectValue.Kind() != reflect.Struct {
+		return object
+	}
+
+	// TODO: Check for time.Time also
 
 	// Iterate through all the fields
 	reflectType := reflect.TypeOf(reflectValue.Interface())
@@ -52,21 +56,16 @@ func CleanSingleObject(object interface{}, userType uint, action uint) interface
 			fieldName = reflectType.Field(i).Name
 		}
 
-		if field.Kind() == reflect.Slice || field.Kind() == reflect.Ptr || field.Kind() == reflect.Interface {
-			resultObject[fieldName] = CleanObject(field.Interface(), userType, action)
-		} else if field.Kind() == reflect.Struct {
-			subObject := CleanObject(field.Interface(), userType, action)
-			if reflectType.Field(i).Anonymous && subObject != nil {
-				subObjectMap, ok := subObject.(map[string]interface{})
-				if ok {
-					for key, value := range subObjectMap {
-						resultObject[key] = value
-					}
-				} else {
-					resultObject[fieldName] = subObject
+		// Anonymous fields
+		cleanedField := CleanObject(field.Interface(), userType, action)
+		if reflectType.Field(i).Anonymous {
+			subObjectMap, ok := cleanedField.(map[string]interface{})
+			if ok {
+				for key, value := range subObjectMap {
+					resultObject[key] = value
 				}
 			} else {
-				resultObject[fieldName] = subObject
+				resultObject[fieldName] = cleanedField
 			}
 		} else {
 			resultObject[fieldName] = field.Interface()
@@ -76,22 +75,28 @@ func CleanSingleObject(object interface{}, userType uint, action uint) interface
 	return resultObject
 }
 
-// CleanSlice removes all the fields that a given user does not have access and
+// CleanMultipleObjects removes all the fields that a given user does not have access and
 // returns a JSON interface of an array of objects.
 // It uses the json tag to get the field name of each of the objects,
 // it it is not defined uses the field name of the struct.
-func CleanSlice(object interface{}, userType uint, action uint) interface{} {
-	// Slice of builtin types, then no need to iterate
-	if reflect.TypeOf(object).Elem().Kind() != reflect.Struct {
-		return object
-	}
-
-	// Iterate through each single object in the slice
+func CleanMultipleObjects(object interface{}, userType uint, action uint) interface{} {
+	// Get the reflect value
 	reflectValue := getReflectValue(object)
 	if reflectValue == nil {
 		return nil
 	}
 
+	// If not slice or array just return the object
+	if reflectValue.Kind() != reflect.Slice &&
+		reflectValue.Kind() != reflect.Array {
+		return object
+	}
+	// Multiple objects of builtin types, then no need to iterate
+	if reflectValue.Elem().Kind() != reflect.Struct {
+		return object
+	}
+
+	// Iterate through each single object in the slice
 	resultObjects := make([]interface{}, reflectValue.Len())
 	for i := 0; i < reflectValue.Len(); i++ {
 		resultObjects[i] = CleanObject(reflectValue.Index(i), userType, action)
