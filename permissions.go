@@ -11,6 +11,10 @@ import (
 // name of the struct.
 func ExtractFields(object interface{}, userType uint, action uint) interface{} {
 	reflectValue := getReflectValue(object)
+	if reflectValue == nil {
+		return nil
+	}
+
 	switch reflectValue.Kind() {
 	case reflect.Slice, reflect.Array:
 		return ExtractMultipleObjectsFields(object, userType, action)
@@ -135,9 +139,10 @@ func HasPermission(permissionTag string, userType uint, action uint) bool {
 	}
 }
 
-// getReflectValue returns the reflect value of an interface it is exists and its valid
+// getReflectValue returns the reflect value of an interface it is exists
+// and its valid
 func getReflectValue(object interface{}) *reflect.Value {
-	// Get the structure of the object
+	// Get the reflect value of the object
 	reflectValue := reflect.ValueOf(object)
 	for reflectValue.Kind() == reflect.Ptr || reflectValue.Kind() == reflect.Interface {
 		reflectValue = reflectValue.Elem()

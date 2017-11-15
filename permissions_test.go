@@ -31,6 +31,8 @@ type DStruct struct {
 }
 
 func TestHasPermission(t *testing.T) {
+	invalidAction := uint(100)
+
 	permissionTag := strings.Join(
 		[]string{
 			strconv.Itoa(PermissionNone),
@@ -62,6 +64,11 @@ func TestHasPermission(t *testing.T) {
 		{"", 1, ActionWrite, true},
 		{"", 2, ActionWrite, true},
 		{"", 3, ActionWrite, true},
+
+		{permissionTag, 0, invalidAction, true},
+		{permissionTag, 1, invalidAction, true},
+		{permissionTag, 2, invalidAction, true},
+		{permissionTag, 3, invalidAction, true},
 	}
 
 	for _, table := range tables {
@@ -97,6 +104,7 @@ func TestExtractSingleObjectFields(t *testing.T) {
 	t.Run("TestExtractSingleObjectFieldsSimple", testExtractSingleObjectFieldsSimple)
 	t.Run("TestExtractSingleObjectFieldsAnonymousStruct", testExtractSingleObjectFieldsAnonymousStruct)
 	t.Run("TestExtractSingleObjectFieldsStructField", testExtractSingleObjectFieldsStructField)
+	t.Run("TestExtractSingleObjectFieldsNil", testExtractSingleObjectFieldsNil)
 }
 
 func testExtractSingleObjectFieldsNonStruct(t *testing.T) {
@@ -281,6 +289,60 @@ func testExtractSingleObjectFieldsStructField(t *testing.T) {
 			"Struct":    map[string]interface{}{"Number": 10, "Label": "ABC"},
 			"Pointer":   map[string]interface{}{"Number": 10, "Label": "ABC"},
 			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"}}},
+	}
+
+	for _, table := range tables {
+		cleanedObject := ExtractSingleObjectFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(cleanedObject, table.result) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
+		}
+	}
+}
+
+func testExtractSingleObjectFieldsNil(t *testing.T) {
+	t.Parallel()
+	baseAStruct := AStruct{Number: 0}
+	var nilPointer *AStruct
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		result   interface{}
+	}{
+		// Struct
+		{baseAStruct, 0, ActionRead, map[string]interface{}{}},
+		{baseAStruct, 1, ActionRead, map[string]interface{}{"Number": 0, "Label": ""}},
+		{baseAStruct, 2, ActionRead, map[string]interface{}{}},
+		{baseAStruct, 3, ActionRead, map[string]interface{}{"Number": 0, "Label": ""}},
+
+		{baseAStruct, 0, ActionWrite, map[string]interface{}{}},
+		{baseAStruct, 1, ActionWrite, map[string]interface{}{}},
+		{baseAStruct, 2, ActionWrite, map[string]interface{}{"Number": 0, "Label": ""}},
+		{baseAStruct, 3, ActionWrite, map[string]interface{}{"Number": 0, "Label": ""}},
+
+		// Pointer
+		{&baseAStruct, 0, ActionRead, map[string]interface{}{}},
+		{&baseAStruct, 1, ActionRead, map[string]interface{}{"Number": 0, "Label": ""}},
+		{&baseAStruct, 2, ActionRead, map[string]interface{}{}},
+		{&baseAStruct, 3, ActionRead, map[string]interface{}{"Number": 0, "Label": ""}},
+
+		{&baseAStruct, 0, ActionWrite, map[string]interface{}{}},
+		{&baseAStruct, 1, ActionWrite, map[string]interface{}{}},
+		{&baseAStruct, 2, ActionWrite, map[string]interface{}{"Number": 0, "Label": ""}},
+		{&baseAStruct, 3, ActionWrite, map[string]interface{}{"Number": 0, "Label": ""}},
+
+		// Nil pointer
+		{nilPointer, 0, ActionRead, nil},
+		{nilPointer, 1, ActionRead, nil},
+		{nilPointer, 2, ActionRead, nil},
+		{nilPointer, 3, ActionRead, nil},
+
+		{nilPointer, 0, ActionWrite, nil},
+		{nilPointer, 1, ActionWrite, nil},
+		{nilPointer, 2, ActionWrite, nil},
+		{nilPointer, 3, ActionWrite, nil},
 	}
 
 	for _, table := range tables {
