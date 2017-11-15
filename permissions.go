@@ -94,14 +94,14 @@ func ExtractMultipleObjectsFields(object interface{}, userType uint, action uint
 		return reflectValue.Interface()
 	}
 	// Multiple objects of builtin types, then no need to iterate
-	if reflect.TypeOf(object).Elem().Kind() != reflect.Struct {
+	if reflect.TypeOf(reflectValue.Interface()).Elem().Kind() != reflect.Struct {
 		return reflectValue.Interface()
 	}
 
 	// Iterate through each single object in the slice
 	resultObjects := make([]interface{}, reflectValue.Len())
 	for i := 0; i < reflectValue.Len(); i++ {
-		resultObjects[i] = ExtractFields(reflectValue.Index(i), userType, action)
+		resultObjects[i] = ExtractFields(reflectValue.Index(i).Interface(), userType, action)
 	}
 	return resultObjects
 }

@@ -289,8 +289,72 @@ func testExtractSingleObjectFieldsStructField(t *testing.T) {
 }
 
 func TestExtractMultipleObjectsFeatures(t *testing.T) {
+	t.Run("TestExtractMultipleObjectsFieldsNonSliceArray", testExtractMultipleObjectsFieldsNonSliceArray)
 	t.Run("TestExtractMultipleObjectsFieldsBuiltin", testExtractMultipleObjectsFieldsBuiltin)
 	t.Run("TestExtractMultipleObjectsFieldsStruct", testExtractMultipleObjectsFieldsStruct)
+}
+
+func testExtractMultipleObjectsFieldsNonSliceArray(t *testing.T) {
+	t.Parallel()
+
+	baseValue := 10.0
+	baseAStruct := AStruct{Number: 10, Text: "ABC"}
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		result   interface{}
+	}{
+		// Struct
+		{baseValue, 0, ActionRead, baseValue},
+		{baseValue, 1, ActionRead, baseValue},
+		{baseValue, 2, ActionRead, baseValue},
+		{baseValue, 3, ActionRead, baseValue},
+
+		{baseValue, 0, ActionWrite, baseValue},
+		{baseValue, 1, ActionWrite, baseValue},
+		{baseValue, 2, ActionWrite, baseValue},
+		{baseValue, 3, ActionWrite, baseValue},
+
+		{baseAStruct, 0, ActionRead, baseAStruct},
+		{baseAStruct, 1, ActionRead, baseAStruct},
+		{baseAStruct, 2, ActionRead, baseAStruct},
+		{baseAStruct, 3, ActionRead, baseAStruct},
+
+		{baseAStruct, 0, ActionWrite, baseAStruct},
+		{baseAStruct, 1, ActionWrite, baseAStruct},
+		{baseAStruct, 2, ActionWrite, baseAStruct},
+		{baseAStruct, 3, ActionWrite, baseAStruct},
+		// Pointer
+		{&baseValue, 0, ActionRead, baseValue},
+		{&baseValue, 1, ActionRead, baseValue},
+		{&baseValue, 2, ActionRead, baseValue},
+		{&baseValue, 3, ActionRead, baseValue},
+
+		{&baseValue, 0, ActionWrite, baseValue},
+		{&baseValue, 1, ActionWrite, baseValue},
+		{&baseValue, 2, ActionWrite, baseValue},
+		{&baseValue, 3, ActionWrite, baseValue},
+
+		{&baseAStruct, 0, ActionRead, baseAStruct},
+		{&baseAStruct, 1, ActionRead, baseAStruct},
+		{&baseAStruct, 2, ActionRead, baseAStruct},
+		{&baseAStruct, 3, ActionRead, baseAStruct},
+
+		{&baseAStruct, 0, ActionWrite, baseAStruct},
+		{&baseAStruct, 1, ActionWrite, baseAStruct},
+		{&baseAStruct, 2, ActionWrite, baseAStruct},
+		{&baseAStruct, 3, ActionWrite, baseAStruct},
+	}
+
+	for _, table := range tables {
+		cleanedObject := ExtractMultipleObjectsFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(cleanedObject, table.result) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
+		}
+	}
 }
 
 func testExtractMultipleObjectsFieldsBuiltin(t *testing.T) {
@@ -357,31 +421,9 @@ func testExtractMultipleObjectsFieldsBuiltin(t *testing.T) {
 }
 
 func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
-	/*t.Parallel()
+	t.Parallel()
 
 	baseAStruct := AStruct{Number: 10, Text: "ABC"}
-	baseArray := [2]AStruct{ baseAStruct, baseAStruct }
-
-	tables := []struct {
-		object   interface{}
-		userType uint
-		action   uint
-		result   interface{}
-	}{
-		// Struct
-		{baseArray, 3, ActionRead, baseArray},
-	}
-
-	for _, table := range tables {
-		cleanedObject := ExtractMultipleObjectsFields(table.object, table.userType, table.action)
-		if !reflect.DeepEqual(cleanedObject, table.result) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
-				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
-		}
-	}*/
-}
-
-/*baseAStruct := AStruct{Number: 10, Text: "ABC"}
 	baseSlice := []AStruct{baseAStruct, baseAStruct}
 
 	tables := []struct {
@@ -391,9 +433,73 @@ func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
 		result   interface{}
 	}{
 		// Struct
-		{baseSlice, 3, ActionRead, []map[string]interface{}{
-			{"Number": 10, "Label": "ABC"},
-			{"Number": 10, "Label": "ABC"},
+		{baseSlice, 0, ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{baseSlice, 1, ActionRead, []interface{}{
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+		{baseSlice, 2, ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{baseSlice, 3, ActionRead, []interface{}{
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+
+		{baseSlice, 0, ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{baseSlice, 1, ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{baseSlice, 2, ActionWrite, []interface{}{
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+		{baseSlice, 3, ActionWrite, []interface{}{
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+
+		// Pointer
+		{&baseSlice, 0, ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&baseSlice, 1, ActionRead, []interface{}{
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+		{&baseSlice, 2, ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&baseSlice, 3, ActionRead, []interface{}{
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+
+		{&baseSlice, 0, ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&baseSlice, 1, ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&baseSlice, 2, ActionWrite, []interface{}{
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+		{&baseSlice, 3, ActionWrite, []interface{}{
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Number": 10, "Label": "ABC"},
 		}},
 	}
 
@@ -403,4 +509,5 @@ func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
 			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, cleanedObjects, table.result)
 		}
-	}*/
+	}
+}
