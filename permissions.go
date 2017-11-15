@@ -17,7 +17,7 @@ func ExtractFields(object interface{}, userType uint, action uint) interface{} {
 	case reflect.Struct:
 		return ExtractSingleObjectFields(object, userType, action)
 	default:
-		return object
+		return reflectValue.Interface()
 	}
 }
 

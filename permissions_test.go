@@ -1,29 +1,33 @@
 package go_pex
 
 import (
-	"testing"
+	"reflect"
 	"strconv"
 	"strings"
-	"reflect"
+	"testing"
 )
 
-// Simple struct test
+// Simple struct
 type AStruct struct {
 	Number int    `pex:"0123"`
 	Text   string `pex:"0123" json:"Label"`
 }
 
-// Anonymous struct test
+// Anonymous struct
 type BStruct struct {
 	AStruct
 	Boolean bool `pex:"0123"`
 }
 
-// Complex struct test
+// Complex struct
 type CStruct struct {
 	Struct    AStruct     `pex:"0123"`
 	Pointer   *AStruct    `pex:"0123"`
 	Interface interface{} `pex:"0123"`
+}
+
+// Empty struct
+type DStruct struct {
 }
 
 func TestHasPermission(t *testing.T) {
@@ -237,46 +241,46 @@ func testExtractSingleObjectFieldsStructField(t *testing.T) {
 		{baseCStruct, 1, ActionRead, map[string]interface{}{
 			"Struct":    map[string]interface{}{"Number": 10, "Label": "ABC"},
 			"Pointer":   map[string]interface{}{"Number": 10, "Label": "ABC"},
-			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"},}},
+			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"}}},
 		{baseCStruct, 2, ActionRead, map[string]interface{}{}},
 		{baseCStruct, 3, ActionRead, map[string]interface{}{
 			"Struct":    map[string]interface{}{"Number": 10, "Label": "ABC"},
 			"Pointer":   map[string]interface{}{"Number": 10, "Label": "ABC"},
-			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"},}},
+			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"}}},
 
 		{baseCStruct, 0, ActionWrite, map[string]interface{}{}},
 		{baseCStruct, 1, ActionWrite, map[string]interface{}{}},
 		{baseCStruct, 2, ActionWrite, map[string]interface{}{
 			"Struct":    map[string]interface{}{"Number": 10, "Label": "ABC"},
 			"Pointer":   map[string]interface{}{"Number": 10, "Label": "ABC"},
-			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"},}},
+			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"}}},
 		{baseCStruct, 3, ActionWrite, map[string]interface{}{
 			"Struct":    map[string]interface{}{"Number": 10, "Label": "ABC"},
 			"Pointer":   map[string]interface{}{"Number": 10, "Label": "ABC"},
-			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"},}},
+			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"}}},
 
 		// Pointer
 		{&baseCStruct, 0, ActionRead, map[string]interface{}{}},
 		{&baseCStruct, 1, ActionRead, map[string]interface{}{
 			"Struct":    map[string]interface{}{"Number": 10, "Label": "ABC"},
 			"Pointer":   map[string]interface{}{"Number": 10, "Label": "ABC"},
-			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"},}},
+			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"}}},
 		{&baseCStruct, 2, ActionRead, map[string]interface{}{}},
 		{&baseCStruct, 3, ActionRead, map[string]interface{}{
 			"Struct":    map[string]interface{}{"Number": 10, "Label": "ABC"},
 			"Pointer":   map[string]interface{}{"Number": 10, "Label": "ABC"},
-			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"},}},
+			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"}}},
 
 		{&baseCStruct, 0, ActionWrite, map[string]interface{}{}},
 		{&baseCStruct, 1, ActionWrite, map[string]interface{}{}},
 		{&baseCStruct, 2, ActionWrite, map[string]interface{}{
 			"Struct":    map[string]interface{}{"Number": 10, "Label": "ABC"},
 			"Pointer":   map[string]interface{}{"Number": 10, "Label": "ABC"},
-			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"},}},
+			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"}}},
 		{&baseCStruct, 3, ActionWrite, map[string]interface{}{
 			"Struct":    map[string]interface{}{"Number": 10, "Label": "ABC"},
 			"Pointer":   map[string]interface{}{"Number": 10, "Label": "ABC"},
-			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"},}},
+			"Interface": map[string]interface{}{"Number": 10, "Label": "ABC"}}},
 	}
 
 	for _, table := range tables {
@@ -508,6 +512,159 @@ func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
 		if !reflect.DeepEqual(cleanedObjects, table.result) {
 			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, cleanedObjects, table.result)
+		}
+	}
+}
+
+func TestExtractObjectsFeatures(t *testing.T) {
+	t.Run("TestExtractFieldsBuiltin", testExtractFieldsBuiltin)
+	t.Run("TestExtractFieldsStruct", testExtractFieldsStruct)
+	t.Run("TestExtractFieldsArraySlice", testExtractFieldsArraySlice)
+}
+
+func testExtractFieldsBuiltin(t *testing.T) {
+	t.Parallel()
+
+	baseValue := "example string"
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		result   interface{}
+	}{
+		// Struct
+		{baseValue, 0, ActionRead, baseValue},
+		{baseValue, 1, ActionRead, baseValue},
+		{baseValue, 2, ActionRead, baseValue},
+		{baseValue, 3, ActionRead, baseValue},
+
+		{baseValue, 0, ActionWrite, baseValue},
+		{baseValue, 1, ActionWrite, baseValue},
+		{baseValue, 2, ActionWrite, baseValue},
+		{baseValue, 3, ActionWrite, baseValue},
+		// Pointer
+		{&baseValue, 0, ActionRead, baseValue},
+		{&baseValue, 1, ActionRead, baseValue},
+		{&baseValue, 2, ActionRead, baseValue},
+		{&baseValue, 3, ActionRead, baseValue},
+
+		{&baseValue, 0, ActionWrite, baseValue},
+		{&baseValue, 1, ActionWrite, baseValue},
+		{&baseValue, 2, ActionWrite, baseValue},
+		{&baseValue, 3, ActionWrite, baseValue},
+	}
+
+	for _, table := range tables {
+		cleanedObject := ExtractFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(cleanedObject, table.result) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
+		}
+	}
+}
+
+func testExtractFieldsStruct(t *testing.T) {
+	t.Parallel()
+
+	baseStruct := DStruct{}
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		result   interface{}
+	}{
+		// Struct
+		{baseStruct, 0, ActionRead, map[string]interface{}{}},
+		{baseStruct, 1, ActionRead, map[string]interface{}{}},
+		{baseStruct, 2, ActionRead, map[string]interface{}{}},
+		{baseStruct, 3, ActionRead, map[string]interface{}{}},
+
+		{baseStruct, 0, ActionWrite, map[string]interface{}{}},
+		{baseStruct, 1, ActionWrite, map[string]interface{}{}},
+		{baseStruct, 2, ActionWrite, map[string]interface{}{}},
+		{baseStruct, 3, ActionWrite, map[string]interface{}{}},
+		// Pointer
+		{&baseStruct, 0, ActionRead, map[string]interface{}{}},
+		{&baseStruct, 1, ActionRead, map[string]interface{}{}},
+		{&baseStruct, 2, ActionRead, map[string]interface{}{}},
+		{&baseStruct, 3, ActionRead, map[string]interface{}{}},
+
+		{&baseStruct, 0, ActionWrite, map[string]interface{}{}},
+		{&baseStruct, 1, ActionWrite, map[string]interface{}{}},
+		{&baseStruct, 2, ActionWrite, map[string]interface{}{}},
+		{&baseStruct, 3, ActionWrite, map[string]interface{}{}},
+	}
+
+	for _, table := range tables {
+		cleanedObject := ExtractFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(cleanedObject, table.result) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
+		}
+	}
+}
+
+func testExtractFieldsArraySlice(t *testing.T) {
+	t.Parallel()
+
+	baseSlice := []int{}
+	baseArray := [1]bool{false}
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		result   interface{}
+	}{
+		// Struct
+		{baseSlice, 0, ActionRead, baseSlice},
+		{baseSlice, 1, ActionRead, baseSlice},
+		{baseSlice, 2, ActionRead, baseSlice},
+		{baseSlice, 3, ActionRead, baseSlice},
+
+		{baseSlice, 0, ActionWrite, baseSlice},
+		{baseSlice, 1, ActionWrite, baseSlice},
+		{baseSlice, 2, ActionWrite, baseSlice},
+		{baseSlice, 3, ActionWrite, baseSlice},
+
+		{baseArray, 0, ActionRead, baseArray},
+		{baseArray, 1, ActionRead, baseArray},
+		{baseArray, 2, ActionRead, baseArray},
+		{baseArray, 3, ActionRead, baseArray},
+
+		{baseArray, 0, ActionWrite, baseArray},
+		{baseArray, 1, ActionWrite, baseArray},
+		{baseArray, 2, ActionWrite, baseArray},
+		{baseArray, 3, ActionWrite, baseArray},
+		// Pointer
+		{&baseSlice, 0, ActionRead, baseSlice},
+		{&baseSlice, 1, ActionRead, baseSlice},
+		{&baseSlice, 2, ActionRead, baseSlice},
+		{&baseSlice, 3, ActionRead, baseSlice},
+
+		{&baseSlice, 0, ActionWrite, baseSlice},
+		{&baseSlice, 1, ActionWrite, baseSlice},
+		{&baseSlice, 2, ActionWrite, baseSlice},
+		{&baseSlice, 3, ActionWrite, baseSlice},
+
+		{&baseArray, 0, ActionRead, baseArray},
+		{&baseArray, 1, ActionRead, baseArray},
+		{&baseArray, 2, ActionRead, baseArray},
+		{&baseArray, 3, ActionRead, baseArray},
+
+		{&baseArray, 0, ActionWrite, baseArray},
+		{&baseArray, 1, ActionWrite, baseArray},
+		{&baseArray, 2, ActionWrite, baseArray},
+		{&baseArray, 3, ActionWrite, baseArray},
+	}
+
+	for _, table := range tables {
+		cleanedObject := ExtractFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(cleanedObject, table.result) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
 		}
 	}
 }
