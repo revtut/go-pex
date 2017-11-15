@@ -5,27 +5,27 @@ import (
 	"strings"
 )
 
-// CleanObject removes all the fields that a given user does not have access and
+// ExtractFields extracts all the fields that a given user have access and
 // returns a JSON interface of that object either its an array, slice or struct.
 // It uses the json tag to get the field name, it it is not defined uses the field
 // name of the struct.
-func CleanObject(object interface{}, userType uint, action uint) interface{} {
+func ExtractFields(object interface{}, userType uint, action uint) interface{} {
 	reflectValue := getReflectValue(object)
 	switch reflectValue.Kind() {
 	case reflect.Slice, reflect.Array:
-		return CleanMultipleObjects(object, userType, action)
+		return ExtractMultipleObjectsFields(object, userType, action)
 	case reflect.Struct:
-		return CleanSingleObject(object, userType, action)
+		return ExtractSingleObjectFields(object, userType, action)
 	default:
 		return object
 	}
 }
 
-// CleanSingleObject removes all the fields that a given user does not have access and
+// ExtractSingleObjectFields extracts all the fields that a given user have access and
 // returns a JSON interface of that object.
 // It uses the json tag to get the field name, it it is not defined uses the field
 // name of the struct.
-func CleanSingleObject(object interface{}, userType uint, action uint) interface{} {
+func ExtractSingleObjectFields(object interface{}, userType uint, action uint) interface{} {
 	reflectValue := getReflectValue(object)
 	if reflectValue == nil {
 		return nil
@@ -45,6 +45,8 @@ func CleanSingleObject(object interface{}, userType uint, action uint) interface
 		field := reflectValue.Field(i)
 		tags := reflectType.Field(i).Tag
 
+		// TODO: Check if field is exported
+
 		// Check permission
 		if !HasPermission(tags.Get(PermissionTag), userType, action) {
 			continue
@@ -57,7 +59,7 @@ func CleanSingleObject(object interface{}, userType uint, action uint) interface
 		}
 
 		// Anonymous fields
-		cleanedField := CleanObject(field.Interface(), userType, action)
+		cleanedField := ExtractFields(field.Interface(), userType, action)
 		if reflectType.Field(i).Anonymous {
 			subObjectMap, ok := cleanedField.(map[string]interface{})
 			if ok {
@@ -75,11 +77,11 @@ func CleanSingleObject(object interface{}, userType uint, action uint) interface
 	return resultObject
 }
 
-// CleanMultipleObjects removes all the fields that a given user does not have access and
+// ExtractMultipleObjectsFields extracts all the fields that a given user have access and
 // returns a JSON interface of an array of objects.
 // It uses the json tag to get the field name of each of the objects,
 // it it is not defined uses the field name of the struct.
-func CleanMultipleObjects(object interface{}, userType uint, action uint) interface{} {
+func ExtractMultipleObjectsFields(object interface{}, userType uint, action uint) interface{} {
 	// Get the reflect value
 	reflectValue := getReflectValue(object)
 	if reflectValue == nil {
@@ -99,7 +101,7 @@ func CleanMultipleObjects(object interface{}, userType uint, action uint) interf
 	// Iterate through each single object in the slice
 	resultObjects := make([]interface{}, reflectValue.Len())
 	for i := 0; i < reflectValue.Len(); i++ {
-		resultObjects[i] = CleanObject(reflectValue.Index(i), userType, action)
+		resultObjects[i] = ExtractFields(reflectValue.Index(i), userType, action)
 	}
 	return resultObjects
 }

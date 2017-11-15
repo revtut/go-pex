@@ -41,14 +41,23 @@ func TestHasPermission(t *testing.T) {
 		action   uint
 		result   bool
 	}{
-		{permissionTag, 0, ActionWrite, false},
 		{permissionTag, 0, ActionRead, false},
-		{permissionTag, 1, ActionWrite, false},
 		{permissionTag, 1, ActionRead, true},
-		{permissionTag, 2, ActionWrite, true},
 		{permissionTag, 2, ActionRead, false},
-		{permissionTag, 3, ActionWrite, true},
 		{permissionTag, 3, ActionRead, true},
+		{permissionTag, 0, ActionWrite, false},
+		{permissionTag, 1, ActionWrite, false},
+		{permissionTag, 2, ActionWrite, true},
+		{permissionTag, 3, ActionWrite, true},
+
+		{"", 0, ActionRead, true},
+		{"", 1, ActionRead, true},
+		{"", 2, ActionRead, true},
+		{"", 3, ActionRead, true},
+		{"", 0, ActionWrite, true},
+		{"", 1, ActionWrite, true},
+		{"", 2, ActionWrite, true},
+		{"", 3, ActionWrite, true},
 	}
 
 	for _, table := range tables {
@@ -79,14 +88,58 @@ func TestGetJSONFieldName(t *testing.T) {
 	}
 }
 
-func TestCleanSingleObject(t *testing.T) {
-	t.Run("TestCleanSingleObjectSimple", testCleanSingleObjectSimple)
-	t.Run("TestCleanSingleObjectAnonymousStruct", testCleanSingleObjectAnonymousStruct)
-	t.Run("TestCleanSingleObjectStructField", testCleanSingleObjectStructField)
+func TestExtractSingleObjectFields(t *testing.T) {
+	t.Run("TestExtractSingleObjectFieldsNonStruct", testExtractSingleObjectFieldsNonStruct)
+	t.Run("TestExtractSingleObjectFieldsSimple", testExtractSingleObjectFieldsSimple)
+	t.Run("TestExtractSingleObjectFieldsAnonymousStruct", testExtractSingleObjectFieldsAnonymousStruct)
+	t.Run("TestExtractSingleObjectFieldsStructField", testExtractSingleObjectFieldsStructField)
 }
 
-func testCleanSingleObjectSimple(t *testing.T) {
+func testExtractSingleObjectFieldsNonStruct(t *testing.T) {
 	t.Parallel()
+
+	baseValue := 10.0
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		result   interface{}
+	}{
+		// Struct
+		{baseValue, 0, ActionRead, baseValue},
+		{baseValue, 1, ActionRead, baseValue},
+		{baseValue, 2, ActionRead, baseValue},
+		{baseValue, 3, ActionRead, baseValue},
+
+		{baseValue, 0, ActionWrite, baseValue},
+		{baseValue, 1, ActionWrite, baseValue},
+		{baseValue, 2, ActionWrite, baseValue},
+		{baseValue, 3, ActionWrite, baseValue},
+		// Pointer
+		{&baseValue, 0, ActionRead, baseValue},
+		{&baseValue, 1, ActionRead, baseValue},
+		{&baseValue, 2, ActionRead, baseValue},
+		{&baseValue, 3, ActionRead, baseValue},
+
+		{&baseValue, 0, ActionWrite, baseValue},
+		{&baseValue, 1, ActionWrite, baseValue},
+		{&baseValue, 2, ActionWrite, baseValue},
+		{&baseValue, 3, ActionWrite, baseValue},
+	}
+
+	for _, table := range tables {
+		cleanedObject := ExtractSingleObjectFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(cleanedObject, table.result) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
+		}
+	}
+}
+
+func testExtractSingleObjectFieldsSimple(t *testing.T) {
+	t.Parallel()
+
 	baseAStruct := AStruct{Number: 10, Text: "ABC"}
 
 	tables := []struct {
@@ -118,7 +171,7 @@ func testCleanSingleObjectSimple(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		cleanedObject := CleanSingleObject(table.object, table.userType, table.action)
+		cleanedObject := ExtractSingleObjectFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(cleanedObject, table.result) {
 			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
@@ -126,7 +179,7 @@ func testCleanSingleObjectSimple(t *testing.T) {
 	}
 }
 
-func testCleanSingleObjectAnonymousStruct(t *testing.T) {
+func testExtractSingleObjectFieldsAnonymousStruct(t *testing.T) {
 	t.Parallel()
 	baseBStruct := BStruct{AStruct: AStruct{Number: 10, Text: "ABC"}, Boolean: false}
 
@@ -159,7 +212,7 @@ func testCleanSingleObjectAnonymousStruct(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		cleanedObject := CleanSingleObject(table.object, table.userType, table.action)
+		cleanedObject := ExtractSingleObjectFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(cleanedObject, table.result) {
 			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
@@ -167,7 +220,7 @@ func testCleanSingleObjectAnonymousStruct(t *testing.T) {
 	}
 }
 
-func testCleanSingleObjectStructField(t *testing.T) {
+func testExtractSingleObjectFieldsStructField(t *testing.T) {
 	t.Parallel()
 
 	baseAStruct := AStruct{Number: 10, Text: "ABC"}
@@ -227,7 +280,7 @@ func testCleanSingleObjectStructField(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		cleanedObject := CleanSingleObject(table.object, table.userType, table.action)
+		cleanedObject := ExtractSingleObjectFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(cleanedObject, table.result) {
 			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
@@ -235,13 +288,16 @@ func testCleanSingleObjectStructField(t *testing.T) {
 	}
 }
 
-func TestCleanMultipleObjects(t *testing.T) {
-	t.Run("TestCleanMultipleObjectsArray", testCleanMultipleObjectsArray)
+func TestExtractMultipleObjectsFeatures(t *testing.T) {
+	t.Run("TestExtractMultipleObjectsFieldsBuiltin", testExtractMultipleObjectsFieldsBuiltin)
+	t.Run("TestExtractMultipleObjectsFieldsStruct", testExtractMultipleObjectsFieldsStruct)
 }
 
-func testCleanMultipleObjectsArray(t *testing.T) {
+func testExtractMultipleObjectsFieldsBuiltin(t *testing.T) {
 	t.Parallel()
+
 	baseArray := [3]int{1, 2, 3}
+	baseSlice := []float32{1, 2, 3}
 
 	tables := []struct {
 		object   interface{}
@@ -259,6 +315,16 @@ func testCleanMultipleObjectsArray(t *testing.T) {
 		{baseArray, 1, ActionWrite, baseArray},
 		{baseArray, 2, ActionWrite, baseArray},
 		{baseArray, 3, ActionWrite, baseArray},
+
+		{baseSlice, 0, ActionRead, baseSlice},
+		{baseSlice, 1, ActionRead, baseSlice},
+		{baseSlice, 2, ActionRead, baseSlice},
+		{baseSlice, 3, ActionRead, baseSlice},
+
+		{baseSlice, 0, ActionWrite, baseSlice},
+		{baseSlice, 1, ActionWrite, baseSlice},
+		{baseSlice, 2, ActionWrite, baseSlice},
+		{baseSlice, 3, ActionWrite, baseSlice},
 		// Pointer
 		{&baseArray, 0, ActionRead, baseArray},
 		{&baseArray, 1, ActionRead, baseArray},
@@ -269,15 +335,50 @@ func testCleanMultipleObjectsArray(t *testing.T) {
 		{&baseArray, 1, ActionWrite, baseArray},
 		{&baseArray, 2, ActionWrite, baseArray},
 		{&baseArray, 3, ActionWrite, baseArray},
+
+		{&baseSlice, 0, ActionRead, baseSlice},
+		{&baseSlice, 1, ActionRead, baseSlice},
+		{&baseSlice, 2, ActionRead, baseSlice},
+		{&baseSlice, 3, ActionRead, baseSlice},
+
+		{&baseSlice, 0, ActionWrite, baseSlice},
+		{&baseSlice, 1, ActionWrite, baseSlice},
+		{&baseSlice, 2, ActionWrite, baseSlice},
+		{&baseSlice, 3, ActionWrite, baseSlice},
 	}
 
 	for _, table := range tables {
-		cleanedObject := CleanMultipleObjects(table.object, table.userType, table.action)
+		cleanedObject := ExtractMultipleObjectsFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(cleanedObject, table.result) {
 			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
 		}
 	}
+}
+
+func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
+	/*t.Parallel()
+
+	baseAStruct := AStruct{Number: 10, Text: "ABC"}
+	baseArray := [2]AStruct{ baseAStruct, baseAStruct }
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		result   interface{}
+	}{
+		// Struct
+		{baseArray, 3, ActionRead, baseArray},
+	}
+
+	for _, table := range tables {
+		cleanedObject := ExtractMultipleObjectsFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(cleanedObject, table.result) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
+		}
+	}*/
 }
 
 /*baseAStruct := AStruct{Number: 10, Text: "ABC"}
@@ -297,7 +398,7 @@ func testCleanMultipleObjectsArray(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		cleanedObjects := CleanMultipleObjects(table.object, table.userType, table.action)
+		cleanedObjects := ExtractMultipleObjectsFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(cleanedObjects, table.result) {
 			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, cleanedObjects, table.result)
