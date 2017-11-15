@@ -25,7 +25,7 @@ Imagine you have this two structs
 ```go
 type Person struct {
     ID     int  `pex:"11"`
-    Name string `pex:"31"`
+    Name string `pex:"31" json:"full_name"`
 }
 
 type Employee struct {
@@ -43,11 +43,12 @@ fields := ExtractFields(employee, userType, ActionRead)
 ```
 
 This will return an interface that contains all the fields in the struct that the user has access.
+The key in the result is the JSON key if the JSON tag exists otherwise its the field name.
 
 ```json
 {
   "ID": 1,
-  "Name": "John Doe"
+  "full_name": "John Doe"
 }
 ```
 
@@ -56,7 +57,7 @@ If the **userType = 0** the result is
 ```json
 {
   "ID": 1,
-  "Name": "John Doe",
+  "full_name": "John Doe",
   "Income": 1000.0
 }
 ```
@@ -67,12 +68,12 @@ This can be applied to slices, pointers and any kind of variables.
 [
   {
     "ID": 1,
-    "Name": "John Doe",
+    "full_name": "John Doe",
     "Income": 1000.0
   },
   {
     "ID": 2,
-    "Name": "Jack Sparrow",
+    "full_name": "Jack Sparrow",
     "Income": 9999.99
   }
 ]
