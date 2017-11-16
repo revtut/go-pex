@@ -3,6 +3,7 @@ package go_pex
 import (
 	"reflect"
 	"strings"
+	"time"
 )
 
 // ExtractFields extracts all the fields that a given user have access and
@@ -20,6 +21,9 @@ func ExtractFields(object interface{}, userType uint, action uint) interface{} {
 		return ExtractMultipleObjectsFields(object, userType, action)
 	case reflect.Struct:
 		return ExtractSingleObjectFields(object, userType, action)
+	case reflect.Map:
+		// TODO: Clean maps
+		fallthrough
 	default:
 		return reflectValue.Interface()
 	}
@@ -35,37 +39,35 @@ func ExtractSingleObjectFields(object interface{}, userType uint, action uint) i
 		return nil
 	}
 
-	// If not struct just return the object
-	if reflectValue.Kind() != reflect.Struct {
+	// If not struct or a special object just return the object
+	if reflectValue.Kind() != reflect.Struct ||
+		isSpecialObject(reflectValue.Interface()) {
 		return reflectValue.Interface()
 	}
-
-	// TODO: Check for time.Time also
 
 	// Iterate through all the fields
 	reflectType := reflect.TypeOf(reflectValue.Interface())
 	resultObject := map[string]interface{}{}
 	for i := 0; i < reflectValue.NumField(); i++ {
-		field := reflectValue.Field(i)
-		tags := reflectType.Field(i).Tag
+		field := reflectType.Field(i)
 
-		if reflectType.Field(i).PkgPath != "" { // Field is exported or not
+		if field.PkgPath != "" { // Field is exported or not
 			continue
 		}
 
-		if !HasPermission(tags.Get(PermissionTag), userType, action) {
+		if !HasPermission(field.Tag.Get(PermissionTag), userType, action) {
 			continue
 		}
 
 		// Get the field name
-		fieldName := GetJSONFieldName(tags.Get("json"))
+		fieldName := GetJSONFieldName(field.Tag.Get("json"))
 		if fieldName == "" {
-			fieldName = reflectType.Field(i).Name
+			fieldName = field.Name
 		}
 
 		// Anonymous fields
-		cleanedField := ExtractFields(field.Interface(), userType, action)
-		if reflectType.Field(i).Anonymous {
+		cleanedField := ExtractFields(reflectValue.Field(i).Interface(), userType, action)
+		if field.Anonymous {
 			subObjectMap, ok := cleanedField.(map[string]interface{})
 			if ok {
 				for key, value := range subObjectMap {
@@ -137,6 +139,16 @@ func HasPermission(permissionTag string, userType uint, action uint) bool {
 		return permission == PermissionWrite || permission == PermissionReadWrite
 	} else {
 		return true
+	}
+}
+
+// isSpecialObject returns true if the given object is from a certain type
+func isSpecialObject(object interface{}) bool {
+	switch object.(type) {
+	case time.Time:
+		return true
+	default:
+		return false
 	}
 }
 

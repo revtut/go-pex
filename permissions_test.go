@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 // Simple struct
@@ -29,6 +30,12 @@ type CStruct struct {
 
 // Empty struct
 type DStruct struct {
+}
+
+// Special struct
+type EStruct struct {
+	Start time.Time  `pex:"0123"`
+	Stop  *time.Time `pex:"0123"`
 }
 
 func TestHasPermission(t *testing.T) {
@@ -106,6 +113,7 @@ func TestExtractSingleObjectFields(t *testing.T) {
 	t.Run("TestExtractSingleObjectFieldsAnonymousStruct", testExtractSingleObjectFieldsAnonymousStruct)
 	t.Run("TestExtractSingleObjectFieldsStructField", testExtractSingleObjectFieldsStructField)
 	t.Run("TestExtractSingleObjectFieldsNil", testExtractSingleObjectFieldsNil)
+	t.Run("TestExtractSingleObjectFieldsSpecial", testExtractSingleObjectFieldsSpecial)
 }
 
 func testExtractSingleObjectFieldsNonStruct(t *testing.T) {
@@ -344,6 +352,50 @@ func testExtractSingleObjectFieldsNil(t *testing.T) {
 		{nilPointer, 1, ActionWrite, nil},
 		{nilPointer, 2, ActionWrite, nil},
 		{nilPointer, 3, ActionWrite, nil},
+	}
+
+	for _, table := range tables {
+		cleanedObject := ExtractSingleObjectFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(cleanedObject, table.result) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
+		}
+	}
+}
+
+func testExtractSingleObjectFieldsSpecial(t *testing.T) {
+	t.Parallel()
+	startTime := time.Now()
+	stopTime := time.Now().Add(1000)
+	baseEStruct := EStruct{Start: startTime, Stop: &stopTime}
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		result   interface{}
+	}{
+		// Struct
+		{baseEStruct, 0, ActionRead, map[string]interface{}{}},
+		{baseEStruct, 1, ActionRead, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+		{baseEStruct, 2, ActionRead, map[string]interface{}{}},
+		{baseEStruct, 3, ActionRead, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+
+		{baseEStruct, 0, ActionWrite, map[string]interface{}{}},
+		{baseEStruct, 1, ActionWrite, map[string]interface{}{}},
+		{baseEStruct, 2, ActionWrite, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+		{baseEStruct, 3, ActionWrite, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+
+		// Pointer
+		{&baseEStruct, 0, ActionRead, map[string]interface{}{}},
+		{&baseEStruct, 1, ActionRead, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+		{&baseEStruct, 2, ActionRead, map[string]interface{}{}},
+		{&baseEStruct, 3, ActionRead, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+
+		{&baseEStruct, 0, ActionWrite, map[string]interface{}{}},
+		{&baseEStruct, 1, ActionWrite, map[string]interface{}{}},
+		{&baseEStruct, 2, ActionWrite, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+		{&baseEStruct, 3, ActionWrite, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
 	}
 
 	for _, table := range tables {
@@ -672,7 +724,7 @@ func testExtractFieldsStruct(t *testing.T) {
 func testExtractFieldsArraySlice(t *testing.T) {
 	t.Parallel()
 
-	baseSlice := []int{}
+	baseSlice := []int{1}
 	baseArray := [1]bool{false}
 
 	tables := []struct {
@@ -731,3 +783,5 @@ func testExtractFieldsArraySlice(t *testing.T) {
 		}
 	}
 }
+
+// TODO: Extract fields with struct that has builtin arrays / slices
