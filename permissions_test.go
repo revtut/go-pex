@@ -9,8 +9,9 @@ import (
 
 // Simple struct
 type AStruct struct {
-	Number int    `pex:"0123"`
-	Text   string `pex:"0123" json:"Label"`
+	Number     int    `pex:"0123"`
+	Text       string `pex:"0123" json:"Label"`
+	otherField int
 }
 
 // Anonymous struct

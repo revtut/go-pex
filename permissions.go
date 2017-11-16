@@ -49,9 +49,10 @@ func ExtractSingleObjectFields(object interface{}, userType uint, action uint) i
 		field := reflectValue.Field(i)
 		tags := reflectType.Field(i).Tag
 
-		// TODO: Check if field is exported
+		if reflectType.Field(i).PkgPath != "" { // Field is exported or not
+			continue
+		}
 
-		// Check permission
 		if !HasPermission(tags.Get(PermissionTag), userType, action) {
 			continue
 		}

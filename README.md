@@ -62,7 +62,7 @@ If the **userType = 0** the result is
 }
 ```
 
-This can be applied to slices, pointers and any kind of variables.
+This can be applied to slices, pointers or any kind of variables.
 
 ```json
 [
