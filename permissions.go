@@ -49,35 +49,9 @@ func ExtractSingleObjectFields(object interface{}, userType uint, action uint) i
 	reflectType := reflect.TypeOf(reflectValue.Interface())
 	resultObject := map[string]interface{}{}
 	for i := 0; i < reflectValue.NumField(); i++ {
-		field := reflectType.Field(i)
-
-		if field.PkgPath != "" { // Field is exported or not
-			continue
-		}
-
-		if !HasPermission(field.Tag.Get(PermissionTag), userType, action) {
-			continue
-		}
-
-		// Get the field name
-		fieldName := GetJSONFieldName(field.Tag.Get("json"))
-		if fieldName == "" {
-			fieldName = field.Name
-		}
-
-		// Anonymous fields
-		cleanedField := ExtractFields(reflectValue.Field(i).Interface(), userType, action)
-		if field.Anonymous {
-			subObjectMap, ok := cleanedField.(map[string]interface{})
-			if ok {
-				for key, value := range subObjectMap {
-					resultObject[key] = value
-				}
-			} else {
-				resultObject[fieldName] = cleanedField
-			}
-		} else {
-			resultObject[fieldName] = cleanedField
+		resultField := extractField(reflectType.Field(i), reflectValue.Field(i), userType, action)
+		for key, value := range resultField {
+			resultObject[key] = value
 		}
 	}
 
@@ -140,6 +114,41 @@ func HasPermission(permissionTag string, userType uint, action uint) bool {
 	} else {
 		return true
 	}
+}
+
+// extractField extracts the field and returns a map from string to interface
+func extractField(field reflect.StructField, value reflect.Value, userType uint, action uint) map[string]interface{} {
+	resultField := map[string]interface{}{}
+
+	if field.PkgPath != "" { // Field is exported or not
+		return resultField
+	}
+
+	if !HasPermission(field.Tag.Get(PermissionTag), userType, action) {
+		return resultField
+	}
+
+	// Get the field name
+	fieldName := GetJSONFieldName(field.Tag.Get("json"))
+	if fieldName == "" {
+		fieldName = field.Name
+	}
+
+	cleanedField := ExtractFields(value.Interface(), userType, action)
+
+	if field.Anonymous { // Anonymous fields
+		subObjectMap, ok := cleanedField.(map[string]interface{})
+		if ok {
+			for key, value := range subObjectMap {
+				resultField[key] = value
+			}
+
+			return resultField
+		}
+	}
+
+	resultField[fieldName] = cleanedField
+	return resultField
 }
 
 // isSpecialObject returns true if the given object is from a certain type

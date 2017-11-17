@@ -882,5 +882,3 @@ func testExtractFieldsStructWithSliceArray(t *testing.T) {
 		}
 	}
 }
-
-// TODO: Extract fields with struct that has builtin arrays / slices
