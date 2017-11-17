@@ -38,6 +38,13 @@ type EStruct struct {
 	Stop  *time.Time `pex:"0123"`
 }
 
+// Arrays and slices in struct fields
+type FStruct struct {
+	Name  string    `pex:"0123"`
+	Array [2]int    `pex:"0123"`
+	Slice []AStruct `pex:"0123"`
+}
+
 func TestHasPermission(t *testing.T) {
 	invalidAction := uint(100)
 
@@ -635,6 +642,7 @@ func TestExtractObjectsFeatures(t *testing.T) {
 	t.Run("TestExtractFieldsBuiltin", testExtractFieldsBuiltin)
 	t.Run("TestExtractFieldsStruct", testExtractFieldsStruct)
 	t.Run("TestExtractFieldsArraySlice", testExtractFieldsArraySlice)
+	t.Run("TestExtractFieldsStructWithSliceArray", testExtractFieldsStructWithSliceArray)
 }
 
 func testExtractFieldsBuiltin(t *testing.T) {
@@ -773,6 +781,97 @@ func testExtractFieldsArraySlice(t *testing.T) {
 		{&baseArray, 1, ActionWrite, baseArray},
 		{&baseArray, 2, ActionWrite, baseArray},
 		{&baseArray, 3, ActionWrite, baseArray},
+	}
+
+	for _, table := range tables {
+		cleanedObject := ExtractFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(cleanedObject, table.result) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, cleanedObject, table.result)
+		}
+	}
+}
+
+func testExtractFieldsStructWithSliceArray(t *testing.T) {
+	t.Parallel()
+
+	baseAStruct := AStruct{Number: 10, Text: "DEF"}
+	baseStruct := FStruct{Name: "ABC", Array: [2]int{1, 2}, Slice: []AStruct{baseAStruct, baseAStruct}}
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		result   interface{}
+	}{
+		// Struct
+		{baseStruct, 0, ActionRead, map[string]interface{}{}},
+		{baseStruct, 1, ActionRead, map[string]interface{}{
+			"Name":  "ABC",
+			"Array": [2]int{1, 2},
+			"Slice": []interface{}{
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+			}}},
+		{baseStruct, 2, ActionRead, map[string]interface{}{}},
+		{baseStruct, 3, ActionRead, map[string]interface{}{
+			"Name":  "ABC",
+			"Array": [2]int{1, 2},
+			"Slice": []interface{}{
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+			}}},
+		{baseStruct, 0, ActionWrite, map[string]interface{}{}},
+		{baseStruct, 1, ActionWrite, map[string]interface{}{}},
+		{baseStruct, 2, ActionWrite, map[string]interface{}{
+			"Name":  "ABC",
+			"Array": [2]int{1, 2},
+			"Slice": []interface{}{
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+			}}},
+		{baseStruct, 3, ActionWrite, map[string]interface{}{
+			"Name":  "ABC",
+			"Array": [2]int{1, 2},
+			"Slice": []interface{}{
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+			}}},
+
+		// Pointer
+		{&baseStruct, 0, ActionRead, map[string]interface{}{}},
+		{&baseStruct, 1, ActionRead, map[string]interface{}{
+			"Name":  "ABC",
+			"Array": [2]int{1, 2},
+			"Slice": []interface{}{
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+			}}},
+		{&baseStruct, 2, ActionRead, map[string]interface{}{}},
+		{&baseStruct, 3, ActionRead, map[string]interface{}{
+			"Name":  "ABC",
+			"Array": [2]int{1, 2},
+			"Slice": []interface{}{
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+			}}},
+
+		{&baseStruct, 0, ActionWrite, map[string]interface{}{}},
+		{&baseStruct, 1, ActionWrite, map[string]interface{}{}},
+		{&baseStruct, 2, ActionWrite, map[string]interface{}{
+			"Name":  "ABC",
+			"Array": [2]int{1, 2},
+			"Slice": []interface{}{
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+			}}},
+		{&baseStruct, 3, ActionWrite, map[string]interface{}{
+			"Name":  "ABC",
+			"Array": [2]int{1, 2},
+			"Slice": []interface{}{
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+				map[string]interface{}{"Number": 10, "Label": "DEF"},
+			}}},
 	}
 
 	for _, table := range tables {
