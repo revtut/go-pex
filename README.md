@@ -103,4 +103,3 @@ cleanedObject := CleanObject(employee, userType, ActionRead).(*Employee)
 `PermissionWrite`: 2
 
 `PermissionReadWrite`: 3
-
