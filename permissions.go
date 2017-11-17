@@ -17,13 +17,12 @@ func ExtractFields(object interface{}, userType uint, action uint) interface{} {
 	}
 
 	switch reflectValue.Kind() {
-	case reflect.Slice, reflect.Array:
-		return ExtractMultipleObjectsFields(object, userType, action)
 	case reflect.Struct:
 		return ExtractSingleObjectFields(object, userType, action)
+	case reflect.Slice, reflect.Array:
+		return ExtractMultipleObjectsFields(object, userType, action)
 	case reflect.Map:
-		// TODO: Clean maps
-		fallthrough
+		return ExtractMapObjectsFields(object, userType, action)
 	default:
 		return reflectValue.Interface()
 	}
@@ -84,6 +83,32 @@ func ExtractMultipleObjectsFields(object interface{}, userType uint, action uint
 	for i := 0; i < reflectValue.Len(); i++ {
 		resultObjects[i] = ExtractFields(reflectValue.Index(i).Interface(), userType, action)
 	}
+	return resultObjects
+}
+
+// ExtractMultipleObjectsFields extracts all the fields that a given user have access and
+// returns a JSON interface of an array of objects.
+// It uses the json tag to get the field name of each of the objects,
+// it it is not defined uses the field name of the struct.
+func ExtractMapObjectsFields(object interface{}, userType uint, action uint) interface{} {
+	// Get the reflect value
+	reflectValue := getReflectValue(object)
+	if reflectValue == nil {
+		return nil
+	}
+
+	// If not slice or array just return the object
+	if reflectValue.Kind() != reflect.Map {
+		return reflectValue.Interface()
+	}
+
+	// Iterate through each single object in the slice
+	resultObjects := make(map[interface{}]interface{}, reflectValue.Len())
+
+	for _, key := range reflectValue.MapKeys() {
+		resultObjects[key.Interface()] = ExtractFields(reflectValue.MapIndex(key).Interface(), userType, action)
+	}
+
 	return resultObjects
 }
 

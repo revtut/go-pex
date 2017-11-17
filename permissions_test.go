@@ -414,7 +414,7 @@ func testExtractSingleObjectFieldsSpecial(t *testing.T) {
 	}
 }
 
-func TestExtractMultipleObjectsFeatures(t *testing.T) {
+func TestExtractMultipleObjectsFields(t *testing.T) {
 	t.Run("TestExtractMultipleObjectsFieldsNonSliceArray", testExtractMultipleObjectsFieldsNonSliceArray)
 	t.Run("TestExtractMultipleObjectsFieldsBuiltin", testExtractMultipleObjectsFieldsBuiltin)
 	t.Run("TestExtractMultipleObjectsFieldsStruct", testExtractMultipleObjectsFieldsStruct)
@@ -630,10 +630,100 @@ func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
 	}
 
 	for _, table := range tables {
-		actuals := ExtractMultipleObjectsFields(table.object, table.userType, table.action)
-		if !reflect.DeepEqual(actuals, table.expected) {
+		actual := ExtractMultipleObjectsFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(actual, table.expected) {
 			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
-				t.Name(), table.object, table.userType, table.action, actuals, table.expected)
+				t.Name(), table.object, table.userType, table.action, actual, table.expected)
+		}
+	}
+}
+
+func TestExtractMapObjectFields(t *testing.T) {
+	baseAStruct := AStruct{Number: 10, Text: "ABC"}
+	baseMap := map[int]interface{}{1: baseAStruct, 2: &baseAStruct}
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		expected interface{}
+	}{
+		// Struct
+		{baseMap, 0, ActionRead, map[interface{}]interface{}{
+			1: map[string]interface{}{},
+			2: map[string]interface{}{},
+		}},
+		{baseMap, 1, ActionRead, map[interface{}]interface{}{
+			1: map[string]interface{}{"Number": 10, "Label": "ABC"},
+			2: map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+		{baseMap, 2, ActionRead, map[interface{}]interface{}{
+			1: map[string]interface{}{},
+			2: map[string]interface{}{},
+		}},
+		{baseMap, 3, ActionRead, map[interface{}]interface{}{
+			1: map[string]interface{}{"Number": 10, "Label": "ABC"},
+			2: map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+
+		{baseMap, 0, ActionWrite, map[interface{}]interface{}{
+			1: map[string]interface{}{},
+			2: map[string]interface{}{},
+		}},
+		{baseMap, 1, ActionWrite, map[interface{}]interface{}{
+			1: map[string]interface{}{},
+			2: map[string]interface{}{},
+		}},
+		{baseMap, 2, ActionWrite, map[interface{}]interface{}{
+			1: map[string]interface{}{"Number": 10, "Label": "ABC"},
+			2: map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+		{baseMap, 3, ActionWrite, map[interface{}]interface{}{
+			1: map[string]interface{}{"Number": 10, "Label": "ABC"},
+			2: map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+
+		// Pointer
+		{&baseMap, 0, ActionRead, map[interface{}]interface{}{
+			1: map[string]interface{}{},
+			2: map[string]interface{}{},
+		}},
+		{&baseMap, 1, ActionRead, map[interface{}]interface{}{
+			1: map[string]interface{}{"Number": 10, "Label": "ABC"},
+			2: map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+		{&baseMap, 2, ActionRead, map[interface{}]interface{}{
+			1: map[string]interface{}{},
+			2: map[string]interface{}{},
+		}},
+		{&baseMap, 3, ActionRead, map[interface{}]interface{}{
+			1: map[string]interface{}{"Number": 10, "Label": "ABC"},
+			2: map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+
+		{&baseMap, 0, ActionWrite, map[interface{}]interface{}{
+			1: map[string]interface{}{},
+			2: map[string]interface{}{},
+		}},
+		{&baseMap, 1, ActionWrite, map[interface{}]interface{}{
+			1: map[string]interface{}{},
+			2: map[string]interface{}{},
+		}},
+		{&baseMap, 2, ActionWrite, map[interface{}]interface{}{
+			1: map[string]interface{}{"Number": 10, "Label": "ABC"},
+			2: map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+		{&baseMap, 3, ActionWrite, map[interface{}]interface{}{
+			1: map[string]interface{}{"Number": 10, "Label": "ABC"},
+			2: map[string]interface{}{"Number": 10, "Label": "ABC"},
+		}},
+	}
+
+	for _, table := range tables {
+		actual := ExtractMapObjectsFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(actual, table.expected) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
 }
