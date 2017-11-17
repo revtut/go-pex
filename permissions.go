@@ -1,6 +1,7 @@
 package go_pex
 
 import (
+	"database/sql"
 	"encoding/json"
 	"reflect"
 	"strings"
@@ -211,6 +212,8 @@ func extractField(field reflect.StructField, value reflect.Value, userType uint,
 func isSpecialObject(object interface{}) bool {
 	switch object.(type) {
 	case time.Time:
+		return true
+	case sql.NullBool, sql.NullFloat64, sql.NullInt64, sql.NullString:
 		return true
 	default:
 		return false
