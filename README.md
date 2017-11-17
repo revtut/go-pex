@@ -19,7 +19,7 @@ it will be added to the result.
 The permission tag is a set of numbers like `pex:"120123"`. Each index in the string corresponds to a user type, that is, imagine that
 a regular user has the **userType = 1**, then his permission would be **2**, which is the corresponding index on the _120123_ string.
 
-## Example
+## Extract fields
 Imagine you have this two structs
 
 ```go
@@ -62,7 +62,7 @@ If the **userType = 0** the result is
 }
 ```
 
-This can be applied to slices, pointers or any kind of variables.
+This can be applied to slices, pointers, maps and any kind of variables.
 
 ```json
 [
@@ -77,6 +77,17 @@ This can be applied to slices, pointers or any kind of variables.
     "Income": 9999.99
   }
 ]
+```
+
+## Clean struct
+It is also possible to take advantage of the fields extraction to clean a struct, that is to set fields that user does
+not have permission to their zero values and the others to the result of the field extraction.
+
+All you have to do is call a function.
+
+```go
+var cleanedObject *Employee
+cleanedObject := CleanObject(employee, userType, ActionRead).(*Employee)
 ```
 
 ## Actions

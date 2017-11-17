@@ -1,10 +1,41 @@
 package go_pex
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 	"time"
 )
+
+// CleanObject is a function that receives an object, cleans it by removing the values that the user has not
+// access for that action and returns a pointer to the cleaned object
+func CleanObject(object interface{}, userType uint, action uint) interface{} {
+	extractedFields := ExtractFields(object, userType, action)
+
+	// Get the reflect value
+	reflectValue := getReflectValue(object)
+	if reflectValue == nil {
+		return nil
+	}
+
+	// Create pointer to new object
+	reflectType := reflect.TypeOf(reflectValue.Interface())
+	result := reflect.New(reflectType).Interface()
+
+	// Marshal
+	data, err := json.Marshal(extractedFields)
+	if err != nil {
+		return nil
+	}
+
+	// Unmarshal
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		return nil
+	}
+
+	return result
+}
 
 // ExtractFields extracts all the fields that a given user have access and
 // returns a JSON interface of that object either its an array, slice or struct.
@@ -86,7 +117,7 @@ func ExtractMultipleObjectsFields(object interface{}, userType uint, action uint
 	return resultObjects
 }
 
-// ExtractMultipleObjectsFields extracts all the fields that a given user have access and
+// ExtractMapObjectsFields extracts all the fields that a given user have access and
 // returns a JSON interface of an array of objects.
 // It uses the json tag to get the field name of each of the objects,
 // it it is not defined uses the field name of the struct.

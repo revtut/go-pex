@@ -45,6 +45,12 @@ type FStruct struct {
 	Slice []AStruct `pex:"0123"`
 }
 
+// Struct with shuffled permissions
+type GStruct struct {
+	Name    string `pex:"0123"`
+	Version uint   `pex:"3210"`
+}
+
 func TestHasPermission(t *testing.T) {
 	invalidAction := uint(100)
 
@@ -966,6 +972,96 @@ func testExtractFieldsStructWithSliceArray(t *testing.T) {
 
 	for _, table := range tables {
 		actual := ExtractFields(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(actual, table.expected) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, actual, table.expected)
+		}
+	}
+}
+
+func TestCleanObject(t *testing.T) {
+	t.Run("TestCleanObjectStruct", testCleanObjectStruct)
+	t.Run("TestCleanObjectSlice", testCleanObjectSlice)
+}
+
+func testCleanObjectStruct(t *testing.T) {
+	t.Parallel()
+	baseStruct := GStruct{Name: "ABC", Version: 1}
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		expected interface{}
+	}{
+		// Struct
+		{baseStruct, 0, ActionRead, &GStruct{Version: 1}},
+		{baseStruct, 1, ActionRead, &GStruct{Name: "ABC"}},
+		{baseStruct, 2, ActionRead, &GStruct{Version: 1}},
+		{baseStruct, 3, ActionRead, &GStruct{Name: "ABC"}},
+
+		{baseStruct, 0, ActionWrite, &GStruct{Version: 1}},
+		{baseStruct, 1, ActionWrite, &GStruct{Version: 1}},
+		{baseStruct, 2, ActionWrite, &GStruct{Name: "ABC"}},
+		{baseStruct, 3, ActionWrite, &GStruct{Name: "ABC"}},
+
+		// Pointer
+		{&baseStruct, 0, ActionRead, &GStruct{Version: 1}},
+		{&baseStruct, 1, ActionRead, &GStruct{Name: "ABC"}},
+		{&baseStruct, 2, ActionRead, &GStruct{Version: 1}},
+		{&baseStruct, 3, ActionRead, &GStruct{Name: "ABC"}},
+
+		{&baseStruct, 0, ActionWrite, &GStruct{Version: 1}},
+		{&baseStruct, 1, ActionWrite, &GStruct{Version: 1}},
+		{&baseStruct, 2, ActionWrite, &GStruct{Name: "ABC"}},
+		{&baseStruct, 3, ActionWrite, &GStruct{Name: "ABC"}},
+	}
+
+	for _, table := range tables {
+		actual := CleanObject(table.object, table.userType, table.action)
+		if !reflect.DeepEqual(actual, table.expected) {
+			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+				t.Name(), table.object, table.userType, table.action, actual, table.expected)
+		}
+	}
+}
+
+func testCleanObjectSlice(t *testing.T) {
+	t.Parallel()
+	baseStruct := GStruct{Name: "ABC", Version: 1}
+	baseSlice := []GStruct{baseStruct, baseStruct}
+
+	tables := []struct {
+		object   interface{}
+		userType uint
+		action   uint
+		expected interface{}
+	}{
+		// Struct
+		{baseSlice, 0, ActionRead, &[]GStruct{{Version: 1}, {Version: 1}}},
+		{baseSlice, 1, ActionRead, &[]GStruct{{Name: "ABC"}, {Name: "ABC"}}},
+		{baseSlice, 2, ActionRead, &[]GStruct{{Version: 1}, {Version: 1}}},
+		{baseSlice, 3, ActionRead, &[]GStruct{{Name: "ABC"}, {Name: "ABC"}}},
+
+		{baseSlice, 0, ActionWrite, &[]GStruct{{Version: 1}, {Version: 1}}},
+		{baseSlice, 1, ActionWrite, &[]GStruct{{Version: 1}, {Version: 1}}},
+		{baseSlice, 2, ActionWrite, &[]GStruct{{Name: "ABC"}, {Name: "ABC"}}},
+		{baseSlice, 3, ActionWrite, &[]GStruct{{Name: "ABC"}, {Name: "ABC"}}},
+
+		// Pointer
+		{&baseSlice, 0, ActionRead, &[]GStruct{{Version: 1}, {Version: 1}}},
+		{&baseSlice, 1, ActionRead, &[]GStruct{{Name: "ABC"}, {Name: "ABC"}}},
+		{&baseSlice, 2, ActionRead, &[]GStruct{{Version: 1}, {Version: 1}}},
+		{&baseSlice, 3, ActionRead, &[]GStruct{{Name: "ABC"}, {Name: "ABC"}}},
+
+		{&baseSlice, 0, ActionWrite, &[]GStruct{{Version: 1}, {Version: 1}}},
+		{&baseSlice, 1, ActionWrite, &[]GStruct{{Version: 1}, {Version: 1}}},
+		{&baseSlice, 2, ActionWrite, &[]GStruct{{Name: "ABC"}, {Name: "ABC"}}},
+		{&baseSlice, 3, ActionWrite, &[]GStruct{{Name: "ABC"}, {Name: "ABC"}}},
+	}
+
+	for _, table := range tables {
+		actual := CleanObject(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
 			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
