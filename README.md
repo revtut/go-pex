@@ -3,21 +3,20 @@
 
 Developing APIs in Go is very common but so far there is no easy way to choose what to return accordingly
 to the user that did the request and to the action.
-To fix that problem I have created a library that allows developers to easily set permissions to the fields of a struct by using Go tags.
-
-This way your code will be more eligible and easier to maintain.
+To solve that, I created a library that allow developers to easily set permissions of the fields of a struct with Go tags.
 
 ## How it works
 
-The system uses the _pex_ tag in each field to determine if a user has or not permission in that field for that action.
+The system uses the _pex_ tag in each field to determine if a user has or not permission for that action in that field.
 
-If the tag is not found, or the action is invalid the system will consider that the user has permission for that field so
+If the tag is not found or the action is invalid, the system will consider that the user has permission for that field so
 it will be added to the result.
 
 ## Tag structure
 
-The permission tag is a set of numbers like `pex:"120123"`. Each index in the string corresponds to a user type, that is, imagine that
-a regular user has the **userType = 1**, then his permission would be **2**, which is the corresponding index on the _120123_ string.
+The permission tag is a set of numbers like `pex:"120123"`. Each index in the number string corresponds to a user type,
+that is, imagine that a regular user has the **userType = 1**, then his permission would be **2**, which is the
+corresponding index on the _120123_ string.
 
 ## Extract fields
 Imagine you have this two structs
@@ -34,15 +33,16 @@ type Employee struct {
 }
 ```
 
-And you queried the database to get the employees. Now suppose you want to return the result to a regular user (userType = 1).
-Of course you don't want to show the income of the employee to a regular user, you have to remove it somehow.
-For that you set the permission to **0** in the **income** field in the **index = 1** and then you just have to calll this function:
+And you queried the database to get the employees. Now suppose you want to return (_ActionRead_) the result to a regular
+user (userType = 1). Of course you don't want to show the income of the employees to a regular user, you have to remove it.
+For that you set the permission to **0** in the **income** field in the **index = 1** and then you just have to call
+extract fields function.
 
 ```go
 fields := ExtractFields(employee, userType, ActionRead)
 ```
 
-This will return an interface that contains all the fields in the struct that the user has access.
+This will return an interface that contains all the fields in the struct that the user has permission.
 The key in the result is the JSON key if the JSON tag exists otherwise its the field name.
 
 ```json
@@ -52,7 +52,7 @@ The key in the result is the JSON key if the JSON tag exists otherwise its the f
 }
 ```
 
-If the **userType = 0** the result is
+If the **userType = 0** the result has the income included
 
 ```json
 {
@@ -83,20 +83,18 @@ This can be applied to slices, pointers, maps and any kind of variables.
 It is also possible to take advantage of the fields extraction to clean a struct, that is to set fields that user does
 not have permission to their zero values and the others to the result of the field extraction.
 
-All you have to do is call a function.
-
 ```go
 var cleanedObject *Employee
 cleanedObject := CleanObject(employee, userType, ActionRead).(*Employee)
 ```
 
-## Actions
+## Possible actions
 
 `ActionRead`: 0 
 
 `ActionWrite`: 1 
 
-## Permissions
+## Permission values
 
 `PermissionNone`: 0
 
