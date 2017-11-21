@@ -10,7 +10,7 @@ import (
 
 // CleanObject is a function that receives an object, cleans it by removing the values that the user has not
 // access for that action and returns a pointer to the cleaned object
-func CleanObject(object interface{}, userType uint, action uint) interface{} {
+func CleanObject(object interface{}, userType string, action uint) interface{} {
 	extractedFields := ExtractFields(object, userType, action)
 
 	// Get the reflect value
@@ -42,7 +42,7 @@ func CleanObject(object interface{}, userType uint, action uint) interface{} {
 // returns a JSON interface of that object either its an array, slice or struct.
 // It uses the json tag to get the field name, it it is not defined uses the field
 // name of the struct.
-func ExtractFields(object interface{}, userType uint, action uint) interface{} {
+func ExtractFields(object interface{}, userType string, action uint) interface{} {
 	reflectValue := getReflectValue(object)
 	if reflectValue == nil {
 		return nil
@@ -64,7 +64,7 @@ func ExtractFields(object interface{}, userType uint, action uint) interface{} {
 // returns a JSON interface of that object.
 // It uses the json tag to get the field name, it it is not defined uses the field
 // name of the struct.
-func ExtractSingleObjectFields(object interface{}, userType uint, action uint) interface{} {
+func ExtractSingleObjectFields(object interface{}, userType string, action uint) interface{} {
 	reflectValue := getReflectValue(object)
 	if reflectValue == nil {
 		return nil
@@ -93,7 +93,7 @@ func ExtractSingleObjectFields(object interface{}, userType uint, action uint) i
 // returns a JSON interface of an array of objects.
 // It uses the json tag to get the field name of each of the objects,
 // it it is not defined uses the field name of the struct.
-func ExtractMultipleObjectsFields(object interface{}, userType uint, action uint) interface{} {
+func ExtractMultipleObjectsFields(object interface{}, userType string, action uint) interface{} {
 	// Get the reflect value
 	reflectValue := getReflectValue(object)
 	if reflectValue == nil {
@@ -122,7 +122,7 @@ func ExtractMultipleObjectsFields(object interface{}, userType uint, action uint
 // returns a JSON interface of an array of objects.
 // It uses the json tag to get the field name of each of the objects,
 // it it is not defined uses the field name of the struct.
-func ExtractMapObjectsFields(object interface{}, userType uint, action uint) interface{} {
+func ExtractMapObjectsFields(object interface{}, userType string, action uint) interface{} {
 	// Get the reflect value
 	reflectValue := getReflectValue(object)
 	if reflectValue == nil {
@@ -144,49 +144,20 @@ func ExtractMapObjectsFields(object interface{}, userType uint, action uint) int
 	return resultObjects
 }
 
-// GetJSONFieldName returns the field name given a JSON tag
-func GetJSONFieldName(jsonTag string) string {
-	if jsonTag == "" {
-		return ""
-	}
-
-	return strings.Split(jsonTag, ",")[0]
-}
-
-// HasPermission returns true if the user has permission for that action on that field
-// or false otherwise
-func HasPermission(permissionTag string, userType uint, action uint) bool {
-	// Get permissions tag
-	if permissionTag == "" {
-		return true
-	}
-
-	permission := int(permissionTag[userType] - '0')
-
-	// Check permissions
-	if action == ActionRead {
-		return permission == PermissionRead || permission == PermissionReadWrite
-	} else if action == ActionWrite {
-		return permission == PermissionWrite || permission == PermissionReadWrite
-	} else {
-		return true
-	}
-}
-
 // extractField extracts the field and returns a map from string to interface
-func extractField(field reflect.StructField, value reflect.Value, userType uint, action uint) map[string]interface{} {
+func extractField(field reflect.StructField, value reflect.Value, userType string, action uint) map[string]interface{} {
 	resultField := map[string]interface{}{}
 
 	if field.PkgPath != "" { // Field is exported or not
 		return resultField
 	}
 
-	if !HasPermission(field.Tag.Get(PermissionTag), userType, action) {
+	if !hasPermission(field.Tag.Get(PermissionTag), userType, action) {
 		return resultField
 	}
 
 	// Get the field name
-	fieldName := GetJSONFieldName(field.Tag.Get("json"))
+	fieldName := getJSONFieldName(field.Tag.Get("json"))
 	if fieldName == "" {
 		fieldName = field.Name
 	}
@@ -233,4 +204,53 @@ func getReflectValue(object interface{}) *reflect.Value {
 	}
 
 	return &reflectValue
+}
+
+// getJSONFieldName returns the field name given a JSON tag
+func getJSONFieldName(jsonTag string) string {
+	if jsonTag == "" {
+		return ""
+	}
+
+	return strings.Split(jsonTag, ",")[0]
+}
+
+// hasPermission checks if a certain user type has permission for a given action.
+// It returns false if the permission for that user is not defined, the user does not have permission
+// for that action or the action is invalid. Returns true if the permission tag is not defined or the user
+// has permission for that action.
+func hasPermission(permissionTag string, userType string, action uint) bool {
+	// Get permissions tag
+	if permissionTag == "" {
+		return true
+	}
+
+	permissions := mapPermissions(permissionTag)
+
+	// Check if user type permission is defined
+	permission, ok := permissions[userType]
+	if !ok {
+		return false
+	}
+
+	// Check permissions
+	if action == ActionRead {
+		return strings.Contains(permission, PermissionRead)
+	} else if action == ActionWrite {
+		return strings.Contains(permission, PermissionWrite)
+	}
+
+	return false
+}
+
+// mapPermissions converts a permission tag into a map from user type to permission
+func mapPermissions(permissionTag string) map[string]string {
+	// Create permissions map
+	permissions := make(map[string]string)
+	for _, permission := range strings.Split(permissionTag, ",") {
+		pair := strings.Split(permission, ":")
+		permissions[pair[0]] = pair[1]
+	}
+
+	return permissions
 }
