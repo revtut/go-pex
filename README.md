@@ -9,33 +9,33 @@ To solve that, I created a library that allow developers to easily set permissio
 
 The system uses the _pex_ tag in each field to determine if a user has or not permission for that action in that field.
 
-If the tag is not found or the action is invalid, the system will consider that the user has permission for that field so
-it will be added to the result.
+It is considered that a certain user type has permission if the permissions tag is not defined or if explicitly written
+in the tag that for a certain action, it has permission.
+Invalid actions or user types that doesn't exist in the tag are considered as **not** having permission.
 
 ## Tag structure
 
-The permission tag is a set of numbers like `pex:"120123"`. Each index in the number string corresponds to a user type,
-that is, imagine that a regular user has the **userType = 1**, then his permission would be **2**, which is the
-corresponding index on the _120123_ string.
+The permission tag is a set of pairs between user type and permission like `pex:"user:r,admin:rw"`.
+In this case _user_ would have permission to _read_ while _admin_ would have permission to _read_ and _write_.
 
 ## Extract fields
 Imagine you have this two structs
 
 ```go
 type Person struct {
-    ID     int  `pex:"11"`
-    Name string `pex:"31" json:"full_name"`
+    ID     int  `pex:"user:r,admin:rw"`
+    Name string `pex:"user:r,admin:rw" json:"full_name"`
 }
 
 type Employee struct {
     Parent
-    Income float32 `pex:"30"`
+    Income float32 `pex:"user:,admin:rw"`
 }
 ```
 
 And you queried the database to get the employees. Now suppose you want to return (_ActionRead_) the result to a regular
-user (userType = 1). Of course you don't want to show the income of the employees to a regular user, you have to remove it.
-For that you set the permission to **0** in the **income** field in the **index = 1** and then you just have to call
+user (userType = "user"). Of course you don't want to show the income of the employees to a regular user, you have to remove it.
+For that you leave the permission of **user** empty in the **income** field as you can see above. Then you just have to call
 extract fields function.
 
 ```go
@@ -52,7 +52,7 @@ The key in the result is the JSON key if the JSON tag exists otherwise its the f
 }
 ```
 
-If the **userType = 0** the result has the income included
+If the **userType = admin** the result has the income included
 
 ```json
 {
@@ -96,10 +96,10 @@ cleanedObject := CleanObject(employee, userType, ActionRead).(*Employee)
 
 ## Permission values
 
-`PermissionNone`: 0
+`PermissionNone`: Empty string
 
-`PermissionRead`: 1
+`PermissionRead`: "r"
 
-`PermissionWrite`: 2
+`PermissionWrite`: "w"
 
-`PermissionReadWrite`: 3
+`PermissionReadWrite`: "rw"
