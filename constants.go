@@ -1,4 +1,4 @@
-package go_pex
+package gopex
 
 // PermissionTag is the tag to use in structs to specify the permissions of each field
 const PermissionTag = "pex"

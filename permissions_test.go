@@ -1,4 +1,4 @@
-package go_pex
+package gopex
 
 import (
 	"reflect"
