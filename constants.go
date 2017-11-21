@@ -13,12 +13,8 @@ const (
 
 // Permissions
 const (
-	// PermissionNone means it hasn't any permission
-	PermissionNone = 0
 	// PermissionRead means it has reading permissions
-	PermissionRead = 1
+	PermissionRead = "r"
 	// PermissionWrite means it has write permissions
-	PermissionWrite = 2
-	// PermissionReadWrite means it has read and write permissions
-	PermissionReadWrite = 3
+	PermissionWrite = "w"
 )
