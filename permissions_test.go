@@ -94,7 +94,7 @@ func testExtractSingleObjectFieldsNonStruct(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractSingleObjectFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -136,7 +136,7 @@ func testExtractSingleObjectFieldsSimple(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractSingleObjectFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -177,7 +177,7 @@ func testExtractSingleObjectFieldsAnonymousStruct(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractSingleObjectFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -245,7 +245,7 @@ func testExtractSingleObjectFieldsStructField(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractSingleObjectFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -299,7 +299,7 @@ func testExtractSingleObjectFieldsNil(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractSingleObjectFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -343,7 +343,7 @@ func testExtractSingleObjectFieldsSpecial(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractSingleObjectFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -412,7 +412,7 @@ func testExtractMultipleObjectsFieldsNonSliceArray(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractMultipleObjectsFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -475,7 +475,7 @@ func testExtractMultipleObjectsFieldsBuiltin(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractMultipleObjectsFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -567,7 +567,7 @@ func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractMultipleObjectsFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -657,7 +657,7 @@ func TestExtractMapObjectFields(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractMapObjectsFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -706,7 +706,7 @@ func testExtractFieldsBuiltin(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -748,7 +748,7 @@ func testExtractFieldsStruct(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -811,7 +811,7 @@ func testExtractFieldsArraySlice(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -902,7 +902,7 @@ func testExtractFieldsStructWithSliceArray(t *testing.T) {
 	for _, table := range tables {
 		actual := ExtractFields(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -949,7 +949,7 @@ func testCleanObjectStruct(t *testing.T) {
 	for _, table := range tables {
 		actual := CleanObject(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
@@ -992,7 +992,7 @@ func testCleanObjectSlice(t *testing.T) {
 	for _, table := range tables {
 		actual := CleanObject(table.object, table.userType, table.action)
 		if !reflect.DeepEqual(actual, table.expected) {
-			t.Errorf("%s (object = %+v, userType = %d, action = %d) was incorrect, got: %+v, want: %+v.",
+			t.Errorf("%s (object = %+v, userType = %s, action = %d) was incorrect, got: %+v, want: %+v.",
 				t.Name(), table.object, table.userType, table.action, actual, table.expected)
 		}
 	}
