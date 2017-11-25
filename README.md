@@ -1,4 +1,9 @@
 # GO-PEX
+
+[![CircleCI](https://circleci.com/gh/joaosilva2095/go-pex.svg?style=svg)](https://circleci.com/gh/joaosilva2095/go-pex)
+[![Go Report Card](https://goreportcard.com/badge/github.com/joaosilva2095/go-pex)](https://goreportcard.com/report/github.com/joaosilva2095/go-pex)
+[![GoDoc](https://godoc.org/github.com/joaosilva2095/go-pex?status.svg)](https://godoc.org/github.com/joaosilva2095/go-pex)
+
 ### A permissions system for Go structs
 
 Developing APIs in Go is very common but so far there is no easy way to choose what to return accordingly
