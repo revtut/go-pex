@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 	"time"
+	"database/sql"
 )
 
 // Simple struct
@@ -32,8 +33,9 @@ type DStruct struct {
 
 // Special struct
 type EStruct struct {
-	Start time.Time  `pex:"guest:,user:r,sys:w,admin:rw"`
-	Stop  *time.Time `pex:"guest:,user:r,sys:w,admin:rw"`
+	Start  time.Time     `pex:"guest:,user:r,sys:w,admin:rw"`
+	Stop   *time.Time    `pex:"guest:,user:r,sys:w,admin:rw"`
+	Number sql.NullInt64 `pex:"guest:,user:r,sys:w,admin:rw"`
 }
 
 // Arrays and slices in struct fields
@@ -309,7 +311,7 @@ func testExtractSingleObjectFieldsSpecial(t *testing.T) {
 	t.Parallel()
 	startTime := time.Now()
 	stopTime := time.Now().Add(1000)
-	baseEStruct := EStruct{Start: startTime, Stop: &stopTime}
+	baseEStruct := EStruct{Start: startTime, Stop: &stopTime, Number: sql.NullInt64{Int64:10, Valid: true}}
 
 	tables := []struct {
 		object   interface{}
@@ -319,25 +321,25 @@ func testExtractSingleObjectFieldsSpecial(t *testing.T) {
 	}{
 		// Struct
 		{baseEStruct, "guest", ActionRead, map[string]interface{}{}},
-		{baseEStruct, "user", ActionRead, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+		{baseEStruct, "user", ActionRead, map[string]interface{}{"Start": startTime.String(), "Stop": stopTime.String(), "Number": int64(10)}},
 		{baseEStruct, "sys", ActionRead, map[string]interface{}{}},
-		{baseEStruct, "admin", ActionRead, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+		{baseEStruct, "admin", ActionRead, map[string]interface{}{"Start": startTime.String(), "Stop": stopTime.String(), "Number": int64(10)}},
 
 		{baseEStruct, "guest", ActionWrite, map[string]interface{}{}},
 		{baseEStruct, "user", ActionWrite, map[string]interface{}{}},
-		{baseEStruct, "sys", ActionWrite, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
-		{baseEStruct, "admin", ActionWrite, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+		{baseEStruct, "sys", ActionWrite, map[string]interface{}{"Start": startTime.String(), "Stop": stopTime.String(), "Number": int64(10)}},
+		{baseEStruct, "admin", ActionWrite, map[string]interface{}{"Start": startTime.String(), "Stop": stopTime.String(), "Number": int64(10)}},
 
 		// Pointer
 		{&baseEStruct, "guest", ActionRead, map[string]interface{}{}},
-		{&baseEStruct, "user", ActionRead, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+		{&baseEStruct, "user", ActionRead, map[string]interface{}{"Start": startTime.String(), "Stop": stopTime.String(), "Number": int64(10)}},
 		{&baseEStruct, "sys", ActionRead, map[string]interface{}{}},
-		{&baseEStruct, "admin", ActionRead, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+		{&baseEStruct, "admin", ActionRead, map[string]interface{}{"Start": startTime.String(), "Stop": stopTime.String(), "Number": int64(10)}},
 
 		{&baseEStruct, "guest", ActionWrite, map[string]interface{}{}},
 		{&baseEStruct, "user", ActionWrite, map[string]interface{}{}},
-		{&baseEStruct, "sys", ActionWrite, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
-		{&baseEStruct, "admin", ActionWrite, map[string]interface{}{"Start": startTime, "Stop": stopTime}},
+		{&baseEStruct, "sys", ActionWrite, map[string]interface{}{"Start": startTime.String(), "Stop": stopTime.String(), "Number": int64(10)}},
+		{&baseEStruct, "admin", ActionWrite, map[string]interface{}{"Start": startTime.String(), "Stop": stopTime.String(), "Number": int64(10)}},
 	}
 
 	for _, table := range tables {
@@ -358,7 +360,6 @@ func TestExtractMultipleObjectsFields(t *testing.T) {
 func testExtractMultipleObjectsFieldsNonSliceArray(t *testing.T) {
 	t.Parallel()
 
-	baseValue := 10.0
 	baseAStruct := AStruct{Number: 10, Text: "ABC"}
 
 	tables := []struct {
@@ -368,16 +369,6 @@ func testExtractMultipleObjectsFieldsNonSliceArray(t *testing.T) {
 		expected interface{}
 	}{
 		// Struct
-		{baseValue, "guest", ActionRead, baseValue},
-		{baseValue, "user", ActionRead, baseValue},
-		{baseValue, "sys", ActionRead, baseValue},
-		{baseValue, "admin", ActionRead, baseValue},
-
-		{baseValue, "guest", ActionWrite, baseValue},
-		{baseValue, "user", ActionWrite, baseValue},
-		{baseValue, "sys", ActionWrite, baseValue},
-		{baseValue, "admin", ActionWrite, baseValue},
-
 		{baseAStruct, "guest", ActionRead, baseAStruct},
 		{baseAStruct, "user", ActionRead, baseAStruct},
 		{baseAStruct, "sys", ActionRead, baseAStruct},
@@ -387,17 +378,8 @@ func testExtractMultipleObjectsFieldsNonSliceArray(t *testing.T) {
 		{baseAStruct, "user", ActionWrite, baseAStruct},
 		{baseAStruct, "sys", ActionWrite, baseAStruct},
 		{baseAStruct, "admin", ActionWrite, baseAStruct},
+
 		// Pointer
-		{&baseValue, "guest", ActionRead, baseValue},
-		{&baseValue, "user", ActionRead, baseValue},
-		{&baseValue, "sys", ActionRead, baseValue},
-		{&baseValue, "admin", ActionRead, baseValue},
-
-		{&baseValue, "guest", ActionWrite, baseValue},
-		{&baseValue, "user", ActionWrite, baseValue},
-		{&baseValue, "sys", ActionWrite, baseValue},
-		{&baseValue, "admin", ActionWrite, baseValue},
-
 		{&baseAStruct, "guest", ActionRead, baseAStruct},
 		{&baseAStruct, "user", ActionRead, baseAStruct},
 		{&baseAStruct, "sys", ActionRead, baseAStruct},

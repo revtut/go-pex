@@ -70,10 +70,14 @@ func ExtractSingleObjectFields(object interface{}, userType string, action uint)
 		return nil
 	}
 
-	// If not struct or a special object just return the object
-	if reflectValue.Kind() != reflect.Struct ||
-		isSpecialObject(reflectValue.Interface()) {
+	// If not struct return the object
+	if reflectValue.Kind() != reflect.Struct {
 		return reflectValue.Interface()
+	}
+
+	// If special object, extract value
+	if isSpecialObject(reflectValue.Interface()) {
+		return getSpecialObjectValue(reflectValue.Interface())
 	}
 
 	// Iterate through all the fields
@@ -186,6 +190,40 @@ func isSpecialObject(object interface{}) bool {
 		return true
 	case sql.NullBool, sql.NullFloat64, sql.NullInt64, sql.NullString:
 		return true
+	default:
+		return false
+	}
+}
+
+// getSpecialObjectValue returns the value of a special object
+func getSpecialObjectValue(object interface{}) interface{} {
+	switch object.(type) {
+	case time.Time:
+		return object.(time.Time).String()
+	case sql.NullBool:
+		value := object.(sql.NullBool).Bool
+		if !object.(sql.NullBool).Valid {
+			return nil
+		}
+		return value
+	case sql.NullFloat64:
+		value := object.(sql.NullFloat64).Float64
+		if !object.(sql.NullFloat64).Valid {
+			return nil
+		}
+		return value
+	case sql.NullInt64:
+		value := object.(sql.NullInt64).Int64
+		if !object.(sql.NullInt64).Valid {
+			return nil
+		}
+		return value
+	case sql.NullString:
+		value := object.(sql.NullString).String
+		if !object.(sql.NullString).Valid {
+			return nil
+		}
+		return value
 	default:
 		return false
 	}
