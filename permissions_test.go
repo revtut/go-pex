@@ -51,6 +51,12 @@ type GStruct struct {
 	Version uint   `pex:"guest:rw,user:w,sys:r,admin:"`
 }
 
+// Struct with one special object inside
+type HStruct struct {
+	Boolean sql.NullBool `pex:"guest:,user:r,sys:w,admin:rw"`
+	otherField int
+}
+
 func TestExtractSingleObjectFields(t *testing.T) {
 	t.Run("TestExtractSingleObjectFieldsNonStruct", testExtractSingleObjectFieldsNonStruct)
 	t.Run("TestExtractSingleObjectFieldsSimple", testExtractSingleObjectFieldsSimple)
@@ -311,7 +317,7 @@ func testExtractSingleObjectFieldsSpecial(t *testing.T) {
 	t.Parallel()
 	startTime := time.Now()
 	stopTime := time.Now().Add(1000)
-	baseEStruct := EStruct{Start: startTime, Stop: &stopTime, Number: sql.NullInt64{Int64:10, Valid: true}}
+	baseEStruct := EStruct{Start: startTime, Stop: &stopTime, Number: sql.NullInt64{Int64: 10, Valid: true}}
 
 	tables := []struct {
 		object   interface{}
@@ -355,6 +361,7 @@ func TestExtractMultipleObjectsFields(t *testing.T) {
 	t.Run("TestExtractMultipleObjectsFieldsNonSliceArray", testExtractMultipleObjectsFieldsNonSliceArray)
 	t.Run("TestExtractMultipleObjectsFieldsBuiltin", testExtractMultipleObjectsFieldsBuiltin)
 	t.Run("TestExtractMultipleObjectsFieldsStruct", testExtractMultipleObjectsFieldsStruct)
+	t.Run("TestExtractMapObjectFields", testExtractMapObjectFields)
 }
 
 func testExtractMultipleObjectsFieldsNonSliceArray(t *testing.T) {
@@ -413,45 +420,45 @@ func testExtractMultipleObjectsFieldsBuiltin(t *testing.T) {
 		expected interface{}
 	}{
 		// Struct
-		{baseArray, "guest", ActionRead, baseArray},
-		{baseArray, "user", ActionRead, baseArray},
-		{baseArray, "sys", ActionRead, baseArray},
-		{baseArray, "admin", ActionRead, baseArray},
+		{baseArray, "guest", ActionRead, []interface{}{1, 2, 3}},
+		{baseArray, "user", ActionRead, []interface{}{1, 2, 3}},
+		{baseArray, "sys", ActionRead, []interface{}{1, 2, 3}},
+		{baseArray, "admin", ActionRead, []interface{}{1, 2, 3}},
 
-		{baseArray, "guest", ActionWrite, baseArray},
-		{baseArray, "user", ActionWrite, baseArray},
-		{baseArray, "sys", ActionWrite, baseArray},
-		{baseArray, "admin", ActionWrite, baseArray},
+		{baseArray, "guest", ActionWrite, []interface{}{1, 2, 3}},
+		{baseArray, "user", ActionWrite, []interface{}{1, 2, 3}},
+		{baseArray, "sys", ActionWrite, []interface{}{1, 2, 3}},
+		{baseArray, "admin", ActionWrite, []interface{}{1, 2, 3}},
 
-		{baseSlice, "guest", ActionRead, baseSlice},
-		{baseSlice, "user", ActionRead, baseSlice},
-		{baseSlice, "sys", ActionRead, baseSlice},
-		{baseSlice, "admin", ActionRead, baseSlice},
+		{baseSlice, "guest", ActionRead, []interface{}{float32(1), float32(2), float32(3)}},
+		{baseSlice, "user", ActionRead, []interface{}{float32(1), float32(2), float32(3)}},
+		{baseSlice, "sys", ActionRead, []interface{}{float32(1), float32(2), float32(3)}},
+		{baseSlice, "admin", ActionRead, []interface{}{float32(1), float32(2), float32(3)}},
 
-		{baseSlice, "guest", ActionWrite, baseSlice},
-		{baseSlice, "user", ActionWrite, baseSlice},
-		{baseSlice, "sys", ActionWrite, baseSlice},
-		{baseSlice, "admin", ActionWrite, baseSlice},
+		{baseSlice, "guest", ActionWrite, []interface{}{float32(1), float32(2), float32(3)}},
+		{baseSlice, "user", ActionWrite, []interface{}{float32(1), float32(2), float32(3)}},
+		{baseSlice, "sys", ActionWrite, []interface{}{float32(1), float32(2), float32(3)}},
+		{baseSlice, "admin", ActionWrite, []interface{}{float32(1), float32(2), float32(3)}},
 		// Pointer
-		{&baseArray, "guest", ActionRead, baseArray},
-		{&baseArray, "user", ActionRead, baseArray},
-		{&baseArray, "sys", ActionRead, baseArray},
-		{&baseArray, "admin", ActionRead, baseArray},
+		{&baseArray, "guest", ActionRead, []interface{}{1, 2, 3}},
+		{&baseArray, "user", ActionRead, []interface{}{1, 2, 3}},
+		{&baseArray, "sys", ActionRead, []interface{}{1, 2, 3}},
+		{&baseArray, "admin", ActionRead, []interface{}{1, 2, 3}},
 
-		{&baseArray, "guest", ActionWrite, baseArray},
-		{&baseArray, "user", ActionWrite, baseArray},
-		{&baseArray, "sys", ActionWrite, baseArray},
-		{&baseArray, "admin", ActionWrite, baseArray},
+		{&baseArray, "guest", ActionWrite, []interface{}{1, 2, 3}},
+		{&baseArray, "user", ActionWrite, []interface{}{1, 2, 3}},
+		{&baseArray, "sys", ActionWrite, []interface{}{1, 2, 3}},
+		{&baseArray, "admin", ActionWrite, []interface{}{1, 2, 3}},
 
-		{&baseSlice, "guest", ActionRead, baseSlice},
-		{&baseSlice, "user", ActionRead, baseSlice},
-		{&baseSlice, "sys", ActionRead, baseSlice},
-		{&baseSlice, "admin", ActionRead, baseSlice},
+		{&baseSlice, "guest", ActionRead, []interface{}{float32(1), float32(2), float32(3)}},
+		{&baseSlice, "user", ActionRead, []interface{}{float32(1), float32(2), float32(3)}},
+		{&baseSlice, "sys", ActionRead, []interface{}{float32(1), float32(2), float32(3)}},
+		{&baseSlice, "admin", ActionRead, []interface{}{float32(1), float32(2), float32(3)}},
 
-		{&baseSlice, "guest", ActionWrite, baseSlice},
-		{&baseSlice, "user", ActionWrite, baseSlice},
-		{&baseSlice, "sys", ActionWrite, baseSlice},
-		{&baseSlice, "admin", ActionWrite, baseSlice},
+		{&baseSlice, "guest", ActionWrite, []interface{}{float32(1), float32(2), float32(3)}},
+		{&baseSlice, "user", ActionWrite, []interface{}{float32(1), float32(2), float32(3)}},
+		{&baseSlice, "sys", ActionWrite, []interface{}{float32(1), float32(2), float32(3)}},
+		{&baseSlice, "admin", ActionWrite, []interface{}{float32(1), float32(2), float32(3)}},
 	}
 
 	for _, table := range tables {
@@ -466,8 +473,8 @@ func testExtractMultipleObjectsFieldsBuiltin(t *testing.T) {
 func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
 	t.Parallel()
 
-	baseAStruct := AStruct{Number: 10, Text: "ABC"}
-	baseSlice := []AStruct{baseAStruct, baseAStruct}
+	baseHStruct := HStruct{Boolean: sql.NullBool{Bool: true, Valid: true}}
+	baseSlice := []HStruct{baseHStruct, baseHStruct}
 
 	tables := []struct {
 		object   interface{}
@@ -481,16 +488,16 @@ func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
 			map[string]interface{}{},
 		}},
 		{baseSlice, "user", ActionRead, []interface{}{
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
 		}},
 		{baseSlice, "sys", ActionRead, []interface{}{
 			map[string]interface{}{},
 			map[string]interface{}{},
 		}},
 		{baseSlice, "admin", ActionRead, []interface{}{
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
 		}},
 
 		{baseSlice, "guest", ActionWrite, []interface{}{
@@ -502,12 +509,12 @@ func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
 			map[string]interface{}{},
 		}},
 		{baseSlice, "sys", ActionWrite, []interface{}{
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
 		}},
 		{baseSlice, "admin", ActionWrite, []interface{}{
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
 		}},
 
 		// Pointer
@@ -516,16 +523,16 @@ func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
 			map[string]interface{}{},
 		}},
 		{&baseSlice, "user", ActionRead, []interface{}{
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
 		}},
 		{&baseSlice, "sys", ActionRead, []interface{}{
 			map[string]interface{}{},
 			map[string]interface{}{},
 		}},
 		{&baseSlice, "admin", ActionRead, []interface{}{
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
 		}},
 
 		{&baseSlice, "guest", ActionWrite, []interface{}{
@@ -537,12 +544,12 @@ func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
 			map[string]interface{}{},
 		}},
 		{&baseSlice, "sys", ActionWrite, []interface{}{
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
 		}},
 		{&baseSlice, "admin", ActionWrite, []interface{}{
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
-			map[string]interface{}{"Number": 10, "Label": "ABC"},
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
 		}},
 	}
 
@@ -555,7 +562,7 @@ func testExtractMultipleObjectsFieldsStruct(t *testing.T) {
 	}
 }
 
-func TestExtractMapObjectFields(t *testing.T) {
+func testExtractMapObjectFields(t *testing.T) {
 	baseAStruct := AStruct{Number: 10, Text: "ABC"}
 	baseMap := map[string]interface{}{"foo": baseAStruct, "bar": &baseAStruct}
 
@@ -741,6 +748,9 @@ func testExtractFieldsArraySlice(t *testing.T) {
 
 	baseSlice := []int{1}
 	baseArray := [1]bool{false}
+	baseHStruct := HStruct{Boolean: sql.NullBool{Bool: true, Valid: true}}
+	baseStructSlice := []HStruct{baseHStruct, baseHStruct}
+	basePointerStructSlice := []*HStruct{&baseHStruct, &baseHStruct}
 
 	tables := []struct {
 		object   interface{}
@@ -749,45 +759,181 @@ func testExtractFieldsArraySlice(t *testing.T) {
 		expected interface{}
 	}{
 		// Struct
-		{baseSlice, "guest", ActionRead, baseSlice},
-		{baseSlice, "user", ActionRead, baseSlice},
-		{baseSlice, "sys", ActionRead, baseSlice},
-		{baseSlice, "admin", ActionRead, baseSlice},
+		{baseSlice, "guest", ActionRead, []interface{}{1}},
+		{baseSlice, "user", ActionRead, []interface{}{1}},
+		{baseSlice, "sys", ActionRead, []interface{}{1}},
+		{baseSlice, "admin", ActionRead, []interface{}{1}},
 
-		{baseSlice, "guest", ActionWrite, baseSlice},
-		{baseSlice, "user", ActionWrite, baseSlice},
-		{baseSlice, "sys", ActionWrite, baseSlice},
-		{baseSlice, "admin", ActionWrite, baseSlice},
+		{baseSlice, "guest", ActionWrite, []interface{}{1}},
+		{baseSlice, "user", ActionWrite, []interface{}{1}},
+		{baseSlice, "sys", ActionWrite, []interface{}{1}},
+		{baseSlice, "admin", ActionWrite, []interface{}{1}},
 
-		{baseArray, "guest", ActionRead, baseArray},
-		{baseArray, "user", ActionRead, baseArray},
-		{baseArray, "sys", ActionRead, baseArray},
-		{baseArray, "admin", ActionRead, baseArray},
+		{baseArray, "guest", ActionRead, []interface{}{false}},
+		{baseArray, "user", ActionRead, []interface{}{false}},
+		{baseArray, "sys", ActionRead, []interface{}{false}},
+		{baseArray, "admin", ActionRead, []interface{}{false}},
 
-		{baseArray, "guest", ActionWrite, baseArray},
-		{baseArray, "user", ActionWrite, baseArray},
-		{baseArray, "sys", ActionWrite, baseArray},
-		{baseArray, "admin", ActionWrite, baseArray},
+		{baseArray, "guest", ActionWrite, []interface{}{false}},
+		{baseArray, "user", ActionWrite, []interface{}{false}},
+		{baseArray, "sys", ActionWrite, []interface{}{false}},
+		{baseArray, "admin", ActionWrite, []interface{}{false}},
+
+		{baseStructSlice, "guest", ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{baseStructSlice, "user", ActionRead, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+		{baseStructSlice, "sys", ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{baseStructSlice, "admin", ActionRead, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+
+		{baseStructSlice, "guest", ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{baseStructSlice, "user", ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{baseStructSlice, "sys", ActionWrite, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+		{baseStructSlice, "admin", ActionWrite, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+
+		{basePointerStructSlice, "guest", ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{basePointerStructSlice, "user", ActionRead, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+		{basePointerStructSlice, "sys", ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{basePointerStructSlice, "admin", ActionRead, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+
+		{basePointerStructSlice, "guest", ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{basePointerStructSlice, "user", ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{basePointerStructSlice, "sys", ActionWrite, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+		{basePointerStructSlice, "admin", ActionWrite, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
 		// Pointer
-		{&baseSlice, "guest", ActionRead, baseSlice},
-		{&baseSlice, "user", ActionRead, baseSlice},
-		{&baseSlice, "sys", ActionRead, baseSlice},
-		{&baseSlice, "admin", ActionRead, baseSlice},
+		{&baseSlice, "guest", ActionRead, []interface{}{1}},
+		{&baseSlice, "user", ActionRead, []interface{}{1}},
+		{&baseSlice, "sys", ActionRead, []interface{}{1}},
+		{&baseSlice, "admin", ActionRead, []interface{}{1}},
 
-		{&baseSlice, "guest", ActionWrite, baseSlice},
-		{&baseSlice, "user", ActionWrite, baseSlice},
-		{&baseSlice, "sys", ActionWrite, baseSlice},
-		{&baseSlice, "admin", ActionWrite, baseSlice},
+		{&baseSlice, "guest", ActionWrite, []interface{}{1}},
+		{&baseSlice, "user", ActionWrite, []interface{}{1}},
+		{&baseSlice, "sys", ActionWrite, []interface{}{1}},
+		{&baseSlice, "admin", ActionWrite, []interface{}{1}},
 
-		{&baseArray, "guest", ActionRead, baseArray},
-		{&baseArray, "user", ActionRead, baseArray},
-		{&baseArray, "sys", ActionRead, baseArray},
-		{&baseArray, "admin", ActionRead, baseArray},
+		{&baseArray, "guest", ActionRead, []interface{}{false}},
+		{&baseArray, "user", ActionRead, []interface{}{false}},
+		{&baseArray, "sys", ActionRead, []interface{}{false}},
+		{&baseArray, "admin", ActionRead, []interface{}{false}},
 
-		{&baseArray, "guest", ActionWrite, baseArray},
-		{&baseArray, "user", ActionWrite, baseArray},
-		{&baseArray, "sys", ActionWrite, baseArray},
-		{&baseArray, "admin", ActionWrite, baseArray},
+		{&baseArray, "guest", ActionWrite, []interface{}{false}},
+		{&baseArray, "user", ActionWrite, []interface{}{false}},
+		{&baseArray, "sys", ActionWrite, []interface{}{false}},
+		{&baseArray, "admin", ActionWrite, []interface{}{false}},
+
+		{&baseStructSlice, "guest", ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&baseStructSlice, "user", ActionRead, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+		{&baseStructSlice, "sys", ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&baseStructSlice, "admin", ActionRead, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+
+		{&baseStructSlice, "guest", ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&baseStructSlice, "user", ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&baseStructSlice, "sys", ActionWrite, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+		{&baseStructSlice, "admin", ActionWrite, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+
+		{&basePointerStructSlice, "guest", ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&basePointerStructSlice, "user", ActionRead, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+		{&basePointerStructSlice, "sys", ActionRead, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&basePointerStructSlice, "admin", ActionRead, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+
+		{&basePointerStructSlice, "guest", ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&basePointerStructSlice, "user", ActionWrite, []interface{}{
+			map[string]interface{}{},
+			map[string]interface{}{},
+		}},
+		{&basePointerStructSlice, "sys", ActionWrite, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
+		{&basePointerStructSlice, "admin", ActionWrite, []interface{}{
+			map[string]interface{}{"Boolean": true},
+			map[string]interface{}{"Boolean": true},
+		}},
 	}
 
 	for _, table := range tables {
@@ -815,7 +961,7 @@ func testExtractFieldsStructWithSliceArray(t *testing.T) {
 		{baseStruct, "guest", ActionRead, map[string]interface{}{}},
 		{baseStruct, "user", ActionRead, map[string]interface{}{
 			"Name":  "ABC",
-			"Array": [2]int{1, 2},
+			"Array": []interface{}{1, 2},
 			"Slice": []interface{}{
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
@@ -823,7 +969,7 @@ func testExtractFieldsStructWithSliceArray(t *testing.T) {
 		{baseStruct, "sys", ActionRead, map[string]interface{}{}},
 		{baseStruct, "admin", ActionRead, map[string]interface{}{
 			"Name":  "ABC",
-			"Array": [2]int{1, 2},
+			"Array": []interface{}{1, 2},
 			"Slice": []interface{}{
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
@@ -832,14 +978,14 @@ func testExtractFieldsStructWithSliceArray(t *testing.T) {
 		{baseStruct, "user", ActionWrite, map[string]interface{}{}},
 		{baseStruct, "sys", ActionWrite, map[string]interface{}{
 			"Name":  "ABC",
-			"Array": [2]int{1, 2},
+			"Array": []interface{}{1, 2},
 			"Slice": []interface{}{
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
 			}}},
 		{baseStruct, "admin", ActionWrite, map[string]interface{}{
 			"Name":  "ABC",
-			"Array": [2]int{1, 2},
+			"Array": []interface{}{1, 2},
 			"Slice": []interface{}{
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
@@ -849,7 +995,7 @@ func testExtractFieldsStructWithSliceArray(t *testing.T) {
 		{&baseStruct, "guest", ActionRead, map[string]interface{}{}},
 		{&baseStruct, "user", ActionRead, map[string]interface{}{
 			"Name":  "ABC",
-			"Array": [2]int{1, 2},
+			"Array": []interface{}{1, 2},
 			"Slice": []interface{}{
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
@@ -857,7 +1003,7 @@ func testExtractFieldsStructWithSliceArray(t *testing.T) {
 		{&baseStruct, "sys", ActionRead, map[string]interface{}{}},
 		{&baseStruct, "admin", ActionRead, map[string]interface{}{
 			"Name":  "ABC",
-			"Array": [2]int{1, 2},
+			"Array": []interface{}{1, 2},
 			"Slice": []interface{}{
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
@@ -867,14 +1013,14 @@ func testExtractFieldsStructWithSliceArray(t *testing.T) {
 		{&baseStruct, "user", ActionWrite, map[string]interface{}{}},
 		{&baseStruct, "sys", ActionWrite, map[string]interface{}{
 			"Name":  "ABC",
-			"Array": [2]int{1, 2},
+			"Array": []interface{}{1, 2},
 			"Slice": []interface{}{
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
 			}}},
 		{&baseStruct, "admin", ActionWrite, map[string]interface{}{
 			"Name":  "ABC",
-			"Array": [2]int{1, 2},
+			"Array": []interface{}{1, 2},
 			"Slice": []interface{}{
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
 				map[string]interface{}{"Number": 10, "Label": "DEF"},
