@@ -1,6 +1,7 @@
 # GO-PEX
 
 [![CircleCI](https://circleci.com/gh/joaosilva2095/go-pex.svg?style=svg)](https://circleci.com/gh/joaosilva2095/go-pex)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e0d1e64c12104e8dbd6f9b50f88321e9)](https://www.codacy.com/app/joaosilva2095/go-pex?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=joaosilva2095/go-pex&amp;utm_campaign=Badge_Grade)
 [![Go Report Card](https://goreportcard.com/badge/github.com/joaosilva2095/go-pex)](https://goreportcard.com/report/github.com/joaosilva2095/go-pex)
 [![GoDoc](https://godoc.org/github.com/joaosilva2095/go-pex?status.svg)](https://godoc.org/github.com/joaosilva2095/go-pex)
 
